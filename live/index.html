@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Field report</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://unpkg.com/proj4@2.11.0/dist/proj4.js"></script>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface-1: #fcfcfb;
+    --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --baseline: #c3c2b7; --border: rgba(11,11,11,0.10);
+    --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a;
+    --c4: #eda100; --c5: #e87ba4; --c6: #008300;
+    --neutral: #dedcd6; --seq-track: #cde2fb;
+    --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface-1: #1a1a19;
+      --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+      --grid: #2c2c2a; --baseline: #383835; --border: rgba(255,255,255,0.10);
+      --c1: #3987e5; --c2: #d95926; --c3: #199e70;
+      --c4: #c98500; --c5: #d55181; --c6: #008300;
+      --neutral: #383835; --seq-track: #104281;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19;
+    --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --baseline: #383835; --border: rgba(255,255,255,0.10);
+    --c1: #3987e5; --c2: #d95926; --c3: #199e70;
+    --c4: #c98500; --c5: #d55181; --c6: #008300;
+    --neutral: #383835; --seq-track: #104281;
+  }
+  * { box-sizing: border-box; }
+  body.viz-root {
+    margin: 0; background: var(--page); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: grid; grid-template-columns: minmax(360px, 40%) 1fr; height: 100vh;
+  }
+  #left { display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+  #toolbar { display: flex; gap: 10px; align-items: center; padding: 10px 12px;
+             border-bottom: 1px solid var(--border); flex-wrap: wrap; font-size: 13px; }
+  #map { flex: 1; min-height: 280px; }
+  #right { overflow-y: auto; padding: 20px 26px 70px; }
+  button, .filebtn { background: var(--surface-1); color: var(--ink);
+    border: 1px solid var(--border); border-radius: 6px; padding: 7px 13px;
+    font: inherit; font-size: 13px; cursor: pointer; }
+  button:hover, .filebtn:hover { border-color: var(--muted); }
+  .filebtn.primary { background: var(--c1); color: #fff; border-color: transparent; font-weight: 600; }
+  input[type=number] { width: 62px; background: var(--surface-1); color: var(--ink);
+    border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font: inherit; }
+  #status { font-size: 13px; color: var(--ink-2); }
+  .card { background: var(--surface-1); border: 1px solid var(--border);
+          border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+  .qh { font-size: 15px; font-weight: 600; margin: 0 0 3px; }
+  .qs { font-size: 12.5px; color: var(--muted); margin: 0 0 14px; }
+  h1 { font-size: 19px; font-weight: 600; margin: 0; }
+  .sub { color: var(--ink-2); font-size: 13px; margin-top: 3px; }
+  .big { font-size: 46px; font-weight: 600; line-height: 1.05; }
+  .big small { font-size: 17px; font-weight: 400; color: var(--ink-2); }
+  .money { font-size: 15px; color: var(--ink-2); margin-top: 4px; }
+  .money b { color: var(--ink); font-weight: 600; }
+  .row { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-end; }
+  .compare { display: grid; gap: 8px; margin: 12px 0 4px; }
+  .cbar { display: grid; grid-template-columns: 132px 1fr 86px; gap: 10px;
+          align-items: center; font-size: 13px; }
+  .cbar .lab { color: var(--ink-2); }
+  .cbar .track { height: 22px; background: var(--grid); border-radius: 5px; overflow: hidden; }
+  .cbar .fill { height: 100%; border-radius: 5px; }
+  .cbar .val { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .causes { display: flex; flex-direction: column; gap: 9px; margin-top: 6px; }
+  .cause { display: grid; grid-template-columns: 13px 1fr auto auto; gap: 11px;
+           align-items: center; font-size: 13.5px; padding: 7px 0;
+           border-bottom: 1px solid var(--grid); }
+  .cause:last-child { border-bottom: none; }
+  .cause .sw { width: 13px; height: 13px; border-radius: 3px; }
+  .cause .amt { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .cause .tag { font-size: 11.5px; padding: 3px 9px; border-radius: 999px;
+                border: 1px solid var(--border); color: var(--ink-2); white-space: nowrap; }
+  .cause .tag.act { border-color: var(--good); color: var(--good); font-weight: 600; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .tile { border: 1px solid var(--border); border-radius: 9px; padding: 12px 14px; }
+  .tile .lab { font-size: 12px; color: var(--ink-2); }
+  .tile .val { font-size: 24px; font-weight: 600; margin-top: 3px; }
+  .tile .sub2 { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .verdict { font-size: 14.5px; line-height: 1.5; }
+  .verdict b { font-weight: 600; }
+  .badge { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px;
+           padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border);
+           color: var(--ink-2); }
+  .badge .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px;
+            color: var(--ink-2); margin-top: 8px; }
+  .legend .k { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sw { width: 11px; height: 11px; border-radius: 3px; }
+  .note { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.45; }
+  svg text { font-family: inherit; }
+  .axis { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .dlab { font-size: 11px; fill: var(--ink-2); }
+  .dlab-strong { font-size: 11px; fill: var(--ink); font-weight: 600; }
+  details summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; margin-top: 10px; }
+  th { text-align: right; color: var(--ink-2); font-weight: 600; padding: 5px 8px;
+       border-bottom: 1px solid var(--baseline); }
+  th:first-child, td:first-child { text-align: left; }
+  td { text-align: right; padding: 5px 8px; border-bottom: 1px solid var(--grid);
+       font-variant-numeric: tabular-nums; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { border: 1px solid var(--border); border-radius: 6px; padding: 5px 9px;
+          font-size: 12px; color: var(--ink-2); }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip.wheat { border-color: var(--c1); }
+  #tooltip { position: fixed; pointer-events: none; background: var(--surface-1);
+             border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px;
+             font-size: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.15); display: none; z-index: 2000; }
+  #tooltip .v { font-weight: 600; color: var(--ink); }
+  #tooltip .k { display: inline-block; width: 12px; height: 3px; border-radius: 2px;
+                margin-right: 6px; vertical-align: middle; }
+  #tooltip div { color: var(--ink-2); }
+  #empty { color: var(--ink-2); font-size: 15px; padding: 50px 24px; text-align: center; line-height: 1.6; }
+  @media (max-width: 900px) { body.viz-root { grid-template-columns: 1fr; height: auto; }
+                              #map { height: 44vh; } }
+</style>
+</head>
+<body class="viz-root">
+<div id="left">
+  <div id="toolbar">
+    <label class="filebtn primary">Upload field boundary<input type="file" id="file" accept=".geojson,.json" hidden></label>
+    <span style="color:var(--ink-2)">or draw it on the map</span>
+    <span style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)">
+      wheat price £<input type="number" id="price" value="190" min="0" step="5">/t</span>
+    <button id="themebtn" title="light / dark">◐</button>
+    <span id="status"></span>
+  </div>
+  <div id="map"></div>
+</div>
+<div id="right">
+  <div id="empty"><b>Draw your field boundary</b> with the polygon tool at the top-left of the
+    map, or upload it as a GeoJSON file.<br>You'll get what the field has been yielding, what
+    nearby fields achieve, and where the difference sits.</div>
+  <div id="report" style="display:none"></div>
+</div>
+<div id="tooltip"></div>
+
+<script>window.PASSPORT_CFG = {"mode": "live", "api": {"base": "https://c8e5gkjyia.execute-api.eu-west-2.amazonaws.com", "path": "/api/v2/passport"}};</script>
+<script>
+"use strict";
+/* ---------- map ---------------------------------------------------------- */
+const map = L.map("map").setView([52.7, -0.5], 7);
+const osm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {maxZoom: 19, attribution: "© OpenStreetMap"});
+const sat = L.tileLayer(
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  {maxZoom: 19, attribution: "Esri World Imagery"});
+sat.addTo(map);
+const layersControl = L.control.layers({"Satellite": sat, "Map": osm}, {}).addTo(map);
+const drawn = new L.FeatureGroup().addTo(map);
+map.addControl(new L.Control.Draw({
+  draw: {polygon: {allowIntersection: false, showArea: true}, rectangle: true,
+         marker: false, circle: false, circlemarker: false, polyline: false},
+  edit: {featureGroup: drawn}}));
+map.on(L.Draw.Event.CREATED, e => { drawn.clearLayers(); drawn.addLayer(e.layer);
+                                    fetchReport(e.layer.toGeoJSON()); });
+map.on(L.Draw.Event.EDITED, e => e.layers.eachLayer(l => fetchReport(l.toGeoJSON())));
+document.getElementById("file").addEventListener("change", ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  f.text().then(txt => {
+    const gj = JSON.parse(txt);
+    drawn.clearLayers();
+    const lyr = L.geoJSON(gj).addTo(drawn);
+    map.fitBounds(lyr.getBounds(), {maxZoom: 16});
+    fetchReport(gj);
+  }).catch(e => setStatus("could not read that file: " + e.message, true));
+});
+document.getElementById("themebtn").onclick = () => {
+  const r = document.documentElement, cur = r.getAttribute("data-theme");
+  r.setAttribute("data-theme", cur === "dark" ? "light" : cur === "light" ? "dark"
+    : (matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark"));
+  if (last) { render(last); renderGapMap(last); }
+};
+document.getElementById("price").addEventListener("change", () => { if (last) render(last); });
+function price() { return Math.max(0, +document.getElementById("price").value || 0); }
+function setStatus(m, err) {
+  const el = document.getElementById("status");
+  el.textContent = m; el.style.color = err ? "var(--critical)" : "var(--ink-2)";
+}
+
+/* ---------- field map: performance leads, opportunity is the overlay ------ */
+/* Painting every field in shades of loss reads as an indictment and does not
+   help targeting. The default view is what the ground ACHIEVED of what is
+   achievable (green, darker = better); the loss view stays one click away. */
+let gapLayer = null, perfLayer = null;
+const PERF_RAMP = ["#c9e0b8", "#8dc06a", "#4f8f3c", "#2f6b25", "#12301a"];
+const PERF_OPACITY = [0.62, 0.60, 0.58, 0.56, 0.54];
+const GAP_RAMP = ["#fde3d3", "#f8b990", "#ef8a4e", "#d95926", "#9c3a12"];
+const GAP_OPACITY = [0.25, 0.42, 0.55, 0.65, 0.75];
+function makeLegend(title, ramp, labels, note) {
+  const c = L.control({position: "bottomright"});
+  c.onAdd = () => {
+    const d = L.DomUtil.create("div");
+    d.style.cssText = "background:var(--surface-1);border:1px solid var(--border);" +
+      "border-radius:9px;padding:9px 12px;font-size:12px;color:var(--ink-2);" +
+      "display:flex;flex-direction:column;gap:4px;max-width:210px";
+    const h = document.createElement("b");
+    h.style.color = "var(--ink)"; h.textContent = title;
+    d.appendChild(h);
+    labels.forEach((lab, i) => {
+      const row = document.createElement("span");
+      row.style.cssText = "display:inline-flex;align-items:center;gap:7px";
+      const sw = document.createElement("span");
+      sw.style.cssText = `width:12px;height:12px;border-radius:3px;background:${ramp[i]}`;
+      row.append(sw, document.createTextNode(lab));
+      d.appendChild(row);
+    });
+    if (note) { const n = document.createElement("span");
+                n.style.cssText = "color:var(--muted);font-size:11px;margin-top:3px";
+                n.textContent = note; d.appendChild(n); }
+    return d;
+  };
+  return c;
+}
+
+/* ---------- v2 grid layers: banded grids -> canvas overlays --------------- */
+/* v2 ships {data,w,h,transform} grids instead of traced vectors; render on a
+   canvas and place with an imageOverlay. Vectors, when present (static packs,
+   local server), still take precedence. */
+const BNG_PROJ = "+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 " +
+  "+x_0=400000 +y_0=-100000 +ellps=airy " +
+  "+towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs";
+function bngToLL(x, y) { const p = proj4(BNG_PROJ, proj4.WGS84, [x, y]);
+                         return [p[1], p[0]]; }
+function hexRgb(h) { return [parseInt(h.slice(1, 3), 16),
+  parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+let gridTip = null;
+function attachGridTip(lyr, g, tipFor) {
+  const move = e => {
+    const p = proj4(proj4.WGS84, BNG_PROJ, [e.latlng.lng, e.latlng.lat]);
+    const c = Math.floor((p[0] - g.transform[2]) / g.transform[0]);
+    const r = Math.floor((g.transform[5] - p[1]) / -g.transform[4]);
+    const v = (c >= 0 && r >= 0 && c < g.w && r < g.h) ? g.data[r * g.w + c] : 0;
+    if (!v) { if (gridTip) { gridTip.remove(); gridTip = null; } return; }
+    if (!gridTip) gridTip = L.tooltip({sticky: true});
+    gridTip.setLatLng(e.latlng).setContent(tipFor(v)).addTo(map);
+  };
+  lyr.on("add", () => map.on("mousemove", move));
+  lyr.on("remove", () => { map.off("mousemove", move);
+    if (gridTip) { gridTip.remove(); gridTip = null; } });
+}
+function gridLayer(g, colorFor, tipFor) {
+  /* Build the overlay in lat/lng space rather than pasting the BNG
+     north-up raster into an axis-aligned box: BNG grid north is rotated
+     from true north by the meridian convergence (about 2 degrees in the
+     east of England), which visibly shears a field-scale overlay against
+     its boundary. BNG->WGS84 is affine to millimetres over one field, so
+     fit it on three projected corners and inverse-sample per destination
+     pixel — no proj4 calls inside the loop. */
+  const t = g.transform;
+  const x0 = t[2], y0 = t[5];
+  const x1 = x0 + t[0] * g.w, y1 = y0 + t[4] * g.h;
+  const c00 = bngToLL(x0, y0), c10 = bngToLL(x1, y0),
+        c01 = bngToLL(x0, y1), c11 = bngToLL(x1, y1);
+  const latMin = Math.min(c00[0], c10[0], c01[0], c11[0]);
+  const latMax = Math.max(c00[0], c10[0], c01[0], c11[0]);
+  const lngMin = Math.min(c00[1], c10[1], c01[1], c11[1]);
+  const lngMax = Math.max(c00[1], c10[1], c01[1], c11[1]);
+  const du1 = c10[1] - c00[1], dv1 = c10[0] - c00[0];
+  const du2 = c01[1] - c00[1], dv2 = c01[0] - c00[0];
+  const det = du1 * dv2 - du2 * dv1;
+  const dLat = latMax - latMin, dLng = lngMax - lngMin;
+  const cv = document.createElement("canvas");
+  const ctx = cv.getContext("2d");
+  if (det && dLat > 0 && dLng > 0) {
+    const W = Math.min(1024, 2 * Math.max(g.w, g.h));
+    const midCos = Math.cos((latMin + latMax) * Math.PI / 360);
+    const H = Math.max(1, Math.round(W * dLat / (dLng * midCos)));
+    cv.width = W; cv.height = H;
+    const img = ctx.createImageData(W, H);
+    for (let j = 0; j < H; j++) {
+      const v = (latMax - (j + 0.5) * dLat / H) - c00[0];
+      for (let i = 0; i < W; i++) {
+        const u = (lngMin + (i + 0.5) * dLng / W) - c00[1];
+        const al = (u * dv2 - v * du2) / det;
+        const be = (v * du1 - u * dv1) / det;
+        if (al < 0 || al >= 1 || be < 0 || be >= 1) continue;
+        const val = g.data[Math.floor(be * g.h) * g.w + Math.floor(al * g.w)];
+        if (!val) continue;
+        const [rr, gg, bb, aa] = colorFor(val);
+        const o = (j * W + i) * 4;
+        img.data[o] = rr; img.data[o + 1] = gg;
+        img.data[o + 2] = bb; img.data[o + 3] = aa;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  } else {                               /* degenerate projection: raw paste */
+    cv.width = g.w; cv.height = g.h;
+    const img = ctx.createImageData(g.w, g.h);
+    for (let i = 0; i < g.data.length; i++) {
+      const val = g.data[i];
+      if (!val) continue;
+      const [rr, gg, bb, aa] = colorFor(val);
+      img.data[i * 4] = rr; img.data[i * 4 + 1] = gg;
+      img.data[i * 4 + 2] = bb; img.data[i * 4 + 3] = aa;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  const lyr = L.imageOverlay(cv.toDataURL(),
+    [[latMin, lngMin], [latMax, lngMax]], {opacity: 1});
+  if (tipFor) attachGridTip(lyr, g, tipFor);
+  return lyr;
+}
+function bandColor(ramp, ops) {
+  return v => { const [r, g, b] = hexRgb(ramp[v - 1]);
+                return [r, g, b, Math.round(255 * ops[v - 1])]; };
+}
+let perfLegend = null, gapLegend = null;
+function renderGapMap(r) {
+  [[gapLayer, gapLegend], [perfLayer, perfLegend]].forEach(([lyr, lg]) => {
+    if (lyr) { layersControl.removeLayer(lyr);
+               if (map.hasLayer(lyr)) map.removeLayer(lyr); }
+    if (lg) { try { map.removeControl(lg); } catch (_) {} }
+  });
+  gapLayer = perfLayer = null;
+  const gm = r.detail && r.detail.gap_map;
+  if (!gm) return;
+  const perf = gm.performance;
+  if (perf && perf.grid) {
+    perfLegend = makeLegend("Yield achieved", PERF_RAMP, perf.labels,
+                            "of what the best nearby fields reach");
+    perfLayer = gridLayer(perf.grid, bandColor(PERF_RAMP, PERF_OPACITY),
+      v => "achieving " + perf.labels[v - 1] + " of achievable");
+    layersControl.addOverlay(perfLayer, "Yield achieved");
+    perfLayer.addTo(map);
+    map.addControl(perfLegend);
+  } else if (perf && perf.bands && perf.bands.features.length) {
+    perfLegend = makeLegend("Yield achieved", PERF_RAMP, perf.labels,
+                            "of what the best nearby fields reach");
+    perfLayer = L.geoJSON(perf.bands, {
+      style: f => {
+        const i = f.properties.band - 1;
+        return {color: PERF_RAMP[Math.min(i + 1, 4)], weight: 0.8,
+                fillColor: PERF_RAMP[i], fillOpacity: PERF_OPACITY[i]};
+      },
+      onEachFeature: (f, l) =>
+        l.bindTooltip("achieving " + f.properties.label + " of achievable", {sticky: true}),
+    });
+    layersControl.addOverlay(perfLayer, "Yield achieved");
+    perfLayer.addTo(map);
+    map.addControl(perfLegend);
+  }
+  if (gm.grid) {
+    gapLegend = makeLegend("Opportunity, t/ha", GAP_RAMP, gm.labels,
+                           "how much more this ground could carry");
+    gapLayer = gridLayer(gm.grid, bandColor(GAP_RAMP, GAP_OPACITY),
+      v => "room for " + gm.labels[v - 1] + " more");
+    layersControl.addOverlay(gapLayer, "Opportunity (t/ha)");   /* off by default */
+  } else if (gm.bands && gm.bands.features.length) {
+    gapLegend = makeLegend("Opportunity, t/ha", GAP_RAMP, gm.labels,
+                           "how much more this ground could carry");
+    gapLayer = L.geoJSON(gm.bands, {
+      style: f => {
+        const i = f.properties.band - 1;
+        return {color: GAP_RAMP[Math.min(i + 1, 4)], weight: 0.8,
+                fillColor: GAP_RAMP[i], fillOpacity: GAP_OPACITY[i]};
+      },
+      onEachFeature: (f, l) =>
+        l.bindTooltip("room for " + f.properties.label + " more", {sticky: true}),
+    });
+    layersControl.addOverlay(gapLayer, "Opportunity (t/ha)");   /* off by default */
+  }
+}
+map.on("overlayadd", e => {
+  if (e.layer === gapLayer && gapLegend) map.addControl(gapLegend);
+  if (e.layer === perfLayer && perfLegend) map.addControl(perfLegend);
+});
+map.on("overlayremove", e => {
+  if (e.layer === gapLayer && gapLegend) { try { map.removeControl(gapLegend); } catch (_) {} }
+  if (e.layer === perfLayer && perfLegend) { try { map.removeControl(perfLegend); } catch (_) {} }
+});
+
+/* ---------- static mode (published copy) vs live API ---------------------- */
+const CFG = window.PASSPORT_CFG || {mode: "live"};
+const STATIC = CFG.mode === "static";
+let boundary = null;
+function showBoundary(geojson) {
+  if (boundary) map.removeLayer(boundary);
+  boundary = L.geoJSON(geojson, {style: {color: "#ffffff", weight: 2.5,
+    fillOpacity: 0, dashArray: "4 3"}}).addTo(map);
+  map.fitBounds(boundary.getBounds(), {maxZoom: 16, padding: [30, 30]});
+}
+async function loadExample(file, fromFarm) {
+  setStatus("loading field…");
+  try {
+    const res = await fetch(file);
+    if (!res.ok) throw new Error(`${res.status} fetching ${file}`);
+    const data = await res.json();
+    last = data; render(data); renderGapMap(data);
+    if (data.geometry) showBoundary(data.geometry);
+    if (fromFarm && currentFarm) {
+      const b = document.createElement("button");
+      b.textContent = "← back to the whole farm";
+      b.style.marginBottom = "14px";
+      b.onclick = () => { renderFarm(currentFarm);
+                          if (farmLayer) map.fitBounds(farmLayer.getBounds(), {padding: [30, 30]}); };
+      const root = document.getElementById("report");
+      root.insertBefore(b, root.firstChild);
+    }
+    setStatus("");
+  } catch (e) { setStatus("could not load that field: " + e.message, true); }
+}
+/* ---------- farm-portfolio mode ------------------------------------------ */
+let farmLayer = null, currentFarm = null;
+function farmMoney(v) {
+  if (v == null) return "—";
+  return v >= 1000 ? "£" + (v / 1000).toFixed(v >= 10000 ? 0 : 1) + "k" : "£" + Math.round(v);
+}
+async function loadFarm(file) {
+  setStatus("loading portfolio…");
+  try {
+    const res = await fetch(file);
+    if (!res.ok) throw new Error(`${res.status} fetching ${file}`);
+    const farm = await res.json();
+    // field paths in farm.json are relative TO THE FARM DIRECTORY
+    farm._base = file.slice(0, file.lastIndexOf("/"));
+    currentFarm = farm;
+    renderFarm(farm);
+    if (gapLayer) { try { map.removeLayer(gapLayer); } catch (_) {} }
+    if (boundary) { map.removeLayer(boundary); boundary = null; }
+    if (farmLayer) map.removeLayer(farmLayer);
+    const byId = Object.fromEntries(farm.fields.map(f => [f.id, f]));
+    /* shade by what each field ACHIEVES of its achievable yield: the strong
+       fields read strong, and the ones with room still stand out as pale */
+    const share = f => (f.achievable_t_ha && f.gap_t_ha != null)
+      ? 1 - f.gap_t_ha / f.achievable_t_ha : null;
+    const vals = farm.fields.map(share).filter(v => v != null);
+    const lo = Math.min(...vals), hi = Math.max(...vals);
+    farmLayer = L.geoJSON(farm.boundaries, {
+      style: f => {
+        const s = share(byId[f.properties.id] || {});
+        const i = s == null ? 0 : Math.min(4, Math.floor((s - lo) / ((hi - lo) || 1) * 4.999));
+        return {color: "#ffffff", weight: 1.2, fillColor: PERF_RAMP[i], fillOpacity: 0.62};
+      },
+      onEachFeature: (f, lyr) => {
+        const d = byId[f.properties.id] || {};
+        const s = share(d);
+        lyr.bindTooltip(`${d.area_ha} ha · achieving ${s == null ? "—" : Math.round(s * 100) + "%"}` +
+                        ` · ${d.gap_t_ha} t/ha to gain`, {sticky: true});
+        lyr.on("click", () => loadExample(farm._base + "/" + d.file, true));
+      },
+    }).addTo(map);
+    if (perfLegend) { try { map.removeControl(perfLegend); } catch (_) {} }
+    perfLegend = makeLegend("Yield achieved",
+      [PERF_RAMP[0], PERF_RAMP[2], PERF_RAMP[4]],
+      [`${Math.round(lo * 100)}% — most room`, "…",
+       `${Math.round(hi * 100)}% — strongest`], "across this farm's fields");
+    map.addControl(perfLegend);
+    map.fitBounds(farmLayer.getBounds(), {padding: [30, 30]});
+    setStatus("");
+  } catch (e) { setStatus("could not load that farm: " + e.message, true); }
+}
+function renderFarm(farm) {
+  document.getElementById("empty").style.display = "none";
+  const root = document.getElementById("report");
+  root.style.display = "block"; root.replaceChildren();
+  const s = farm.summary, e = farm.environment;
+  const card = () => { const d = document.createElement("div");
+                       d.className = "card"; root.appendChild(d); return d; };
+  const head = card();
+  const h = document.createElement("h1"); h.textContent = farm.label;
+  const sub = document.createElement("div"); sub.className = "sub";
+  sub.textContent = `${s.n_fields} fields · ${s.total_area_ha} ha · ` +
+    `${e.annual_rainfall_mm} mm rain, ${e.mean_temperature_c} °C, ` +
+    `${e.topsoil_clay_pct}% clay topsoil, ${e.elevation_m} m`;
+  head.append(h, sub);
+
+  const c1 = card();
+  const q1 = document.createElement("div"); q1.className = "qh";
+  q1.textContent = "What the portfolio is leaving on the table";
+  const q1s = document.createElement("div"); q1s.className = "qs";
+  const achieved = (s.mean_achievable_t_ha && s.area_weighted_gap_t_ha != null)
+    ? 1 - s.area_weighted_gap_t_ha / s.mean_achievable_t_ha : null;
+  q1s.textContent = achieved
+    ? `The farm already achieves ${Math.round(achieved * 100)}% of what the best nearby ` +
+      `fields reach across ${s.total_area_ha} ha — this is the remaining room`
+    : `Across all ${s.total_area_ha} ha, against what the best nearby fields achieve`;
+  c1.append(q1, q1s);
+  const big = document.createElement("div");
+  big.innerHTML = `<div class="big"></div><div class="sub"></div>`;
+  big.querySelector(".big").textContent = f1(s.area_weighted_gap_t_ha);
+  big.querySelector(".big").insertAdjacentHTML("beforeend", " <small>t/ha still to gain</small>");
+  big.querySelector(".sub").textContent =
+    `${s.tonnes_lost_per_year} t a year — about ${farmMoney(s.value_at_stake_gbp_per_year)} ` +
+    `at £${s.price_assumption_gbp_per_t}/t`;
+  c1.appendChild(big);
+  const tl = document.createElement("div"); tl.className = "tiles";
+  tl.style.marginTop = "14px";
+  const tile = (lab, val, sub2) => {
+    const d = document.createElement("div"); d.className = "tile";
+    d.innerHTML = `<div class="lab"></div><div class="val"></div><div class="sub2"></div>`;
+    d.querySelector(".lab").textContent = lab;
+    d.querySelector(".val").textContent = val;
+    d.querySelector(".sub2").textContent = sub2 || "";
+    tl.appendChild(d);
+  };
+  tile("Within your influence", f1(s.addressable_gap_t_ha) + " t/ha",
+       farmMoney(s.addressable_value_gbp_per_year) + "/yr at most");
+  tile("Biggest cause", (CAUSES[s.dominant_cause] || {}).name || "—", "across the farm");
+  tile("Spread between fields", f1(s.spread_between_fields_t_ha) + " t/ha",
+       "worst minus best field");
+  c1.appendChild(tl);
+  const causes = Object.entries(s.causes_t_ha || {}).filter(([, v]) => v > 0);
+  const tot = causes.reduce((a, [, v]) => a + v, 0);
+  const plot = document.createElement("div"); plot.style.marginTop = "14px";
+  c1.appendChild(plot); drawCauseBar(plot, causes, tot);
+  const lg = document.createElement("div"); lg.className = "legend";
+  causes.forEach(([k, v]) => {
+    const sp = document.createElement("span"); sp.className = "k";
+    const sw = document.createElement("span");
+    sw.className = "sw"; sw.style.background = `var(${CAUSES[k].c})`;
+    sp.append(sw, document.createTextNode(`${CAUSES[k].name} ${f2(v)}`));
+    lg.appendChild(sp);
+  });
+  c1.appendChild(lg);
+
+  const c2 = card();
+  const q2 = document.createElement("div"); q2.className = "qh";
+  q2.textContent = "Field by field";
+  const q2s = document.createElement("div"); q2s.className = "qs";
+  q2s.textContent = "Worst first — click a field, or a boundary on the map, for its full report";
+  c2.append(q2, q2s);
+  const tbl = document.createElement("table");
+  tbl.innerHTML = `<thead><tr><th>field</th><th>ha</th><th>losing</th>
+    <th>biggest cause</th><th>seasons</th></tr></thead><tbody></tbody>`;
+  const tb = tbl.querySelector("tbody");
+  [...farm.fields].sort((a, b) => (b.gap_t_ha || 0) - (a.gap_t_ha || 0)).forEach(f => {
+    const tr = document.createElement("tr");
+    tr.style.cursor = "pointer";
+    tr.addEventListener("click", () => loadExample(farm._base + "/" + f.file, true));
+    const cells = [f.id.replace("GB-WW-", ""), f1(f.area_ha),
+                   f1(f.gap_t_ha) + " t/ha",
+                   (CAUSES[f.dominant_cause] || {}).name || "—",
+                   f.full_seasons];
+    cells.forEach((v, i) => { const td = document.createElement("td");
+                              td.textContent = v; tr.appendChild(td); });
+    tb.appendChild(tr);
+  });
+  c2.appendChild(tbl);
+
+  const c3 = card();
+  const n = document.createElement("div"); n.className = "note";
+  n.style.marginTop = "0"; n.textContent = farm.disclaimer;
+  c3.appendChild(n);
+}
+
+if (STATIC) {
+  const bar = document.getElementById("toolbar");
+  bar.replaceChildren();
+  const farms = CFG.farms || [];
+  const lab = document.createElement("span");
+  lab.style.color = "var(--ink-2)";
+  lab.textContent = farms.length ? "Farm:" : "Example field:";
+  const sel = document.createElement("select");
+  sel.style.cssText = "background:var(--surface-1);color:var(--ink);border:1px solid " +
+    "var(--border);border-radius:6px;padding:7px 9px;font:inherit;font-size:13px;max-width:340px";
+  (farms.length ? farms : CFG.examples).forEach(e => {
+    const o = document.createElement("option");
+    o.value = e.file;
+    o.textContent = farms.length
+      ? `${e.label} — ${e.n_fields} fields, ${e.total_area_ha} ha, gap ${e.gap_t_ha} t/ha`
+      : `${e.area_ha} ha · gap ${e.gap_t_ha} t/ha (${e.gap_class})`;
+    sel.appendChild(o);
+  });
+  sel.addEventListener("change", () => farms.length
+    ? loadFarm(sel.value) : loadExample(sel.value));
+  const priceWrap = document.createElement("span");
+  priceWrap.style.cssText = "margin-left:auto;display:inline-flex;align-items:center;" +
+    "gap:6px;color:var(--ink-2)";
+  priceWrap.innerHTML = 'wheat price £<input type="number" id="price" value="190" min="0" step="5">/t';
+  const theme = document.createElement("button");
+  theme.textContent = "◐"; theme.title = "light / dark";
+  theme.onclick = () => {
+    const r = document.documentElement, cur = r.getAttribute("data-theme");
+    r.setAttribute("data-theme", cur === "dark" ? "light" : cur === "light" ? "dark"
+      : (matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark"));
+    if (last) { render(last); renderGapMap(last); }
+  };
+  const st = document.createElement("span"); st.id = "status";
+  st.style.cssText = "font-size:13px;color:var(--ink-2)";
+  bar.append(lab, sel, priceWrap, theme, st);
+  document.getElementById("price").addEventListener("change", () => { if (last) render(last); });
+  document.getElementById("empty").innerHTML =
+    (farms.length ? "<b>Pick a farm</b> from the list above."
+                  : "<b>Pick an example field</b> from the list above.") + "<br>" +
+    "This is a published, read-only preview: the reports for these fields were computed in " +
+    "advance. Drawing your own boundary runs the same analysis live and needs the analysis " +
+    "service, not this file host.";
+  if (farms.length) loadFarm(farms[0].file);
+  else if (CFG.examples.length) loadExample(CFG.examples[0].file);
+}
+
+/* ---------- fetch --------------------------------------------------------- */
+/* the live page is public but the token never is: it comes from a #token=
+   URL fragment (stored, then scrubbed from the address bar) or a one-time
+   prompt — never from the page source */
+function apiToken() {
+  const m = location.hash.match(/token=([^&]+)/);
+  if (m) {
+    localStorage.setItem("passport_token", decodeURIComponent(m[1]));
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+  let tok = localStorage.getItem("passport_token");
+  if (!tok) {
+    tok = (prompt("API token for the passport service:") || "").trim();
+    if (tok) localStorage.setItem("passport_token", tok);
+  }
+  return tok || null;
+}
+let last = null;
+async function fetchReport(gj) {
+  if (STATIC) {
+    setStatus("this published preview cannot analyse new boundaries", true);
+    return;
+  }
+  setStatus("reading the satellite record…");
+  document.getElementById("report").style.opacity = 0.45;
+  try {
+    const api = CFG.api || {};
+    const hdrs = {"Content-Type": "application/json"};
+    const tok = api.token || (api.base ? apiToken() : null);
+    if (tok) hdrs["X-Api-Token"] = tok;
+    const res = await fetch((api.base || "") + (api.path || "/api/v2/passport"),
+      {method: "POST", headers: hdrs, body: JSON.stringify(gj)});
+    if (res.status === 401) {           /* stale stored token: re-prompt next try */
+      localStorage.removeItem("passport_token");
+      throw new Error("unauthorised — reload and enter the API token again");
+    }
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || res.statusText);
+    last = data; render(data); renderGapMap(data); setStatus("");
+  } catch (e) { setStatus(e.message, true); }
+  document.getElementById("report").style.opacity = 1;
+}
+
+/* ---------- tooltip / svg helpers ----------------------------------------- */
+const tip = document.getElementById("tooltip");
+function showTip(ev, rows) {
+  tip.replaceChildren(...rows.map(r => {
+    const d = document.createElement("div");
+    if (r.color) { const k = document.createElement("span");
+      k.className = "k"; k.style.background = r.color; d.appendChild(k); }
+    const v = document.createElement("span"); v.className = "v"; v.textContent = r.value;
+    d.append(v, document.createTextNode(" " + r.label));
+    return d;
+  }));
+  tip.style.display = "block";
+  const w = tip.offsetWidth, x = ev.clientX + 14;
+  tip.style.left = (x + w > innerWidth - 8 ? ev.clientX - w - 10 : x) + "px";
+  tip.style.top = (ev.clientY + 12) + "px";
+}
+function hideTip() { tip.style.display = "none"; }
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function cssVar(n) { return getComputedStyle(document.body).getPropertyValue(n).trim(); }
+function barPath(x, w, y0, y1) {
+  const r = Math.min(4, w / 2, Math.abs(y0 - y1));
+  return `M${x},${y0} L${x},${y1 + r} Q${x},${y1} ${x + r},${y1} L${x + w - r},${y1}` +
+         ` Q${x + w},${y1} ${x + w},${y1 + r} L${x + w},${y0} Z`;
+}
+const f1 = v => v == null || Number.isNaN(v) ? "—" : (+v).toFixed(1);
+const f2 = v => v == null || Number.isNaN(v) ? "—" : (+v).toFixed(2);
+function money(tPerHa, ha) {
+  const p = price();
+  if (!p || tPerHa == null) return null;
+  const total = tPerHa * ha * p;
+  return total >= 1000 ? "£" + Math.round(total / 100) * 100 / 1000 + "k"
+                       : "£" + Math.round(total / 10) * 10;
+}
+
+/* ---------- plain-English cause table ------------------------------------- */
+const CAUSES = {
+  weather:          {c: "--c1", name: "Weather in those seasons", tag: "outside your control"},
+  soil:             {c: "--c2", name: "Soil type here",           tag: "outside your control"},
+  rotation:         {c: "--c3", name: "Rotation position",        tag: "you choose", act: true},
+  terrain:          {c: "--c4", name: "Slope and elevation",      tag: "outside your control"},
+  field_edges:      {c: "--c5", name: "Field margins/headlands",  tag: "partly fixable", act: true},
+  other_management: {c: "--c6", name: "Management opportunity",    tag: "upper limit · investigate", act: true},
+};
+const HAZARD = {dry: "dry spells during grain fill", wet: "wet autumns at drilling",
+                hot: "hot spells during grain fill"};
+
+function render(r) {
+  document.getElementById("empty").style.display = "none";
+  const root = document.getElementById("report");
+  root.style.display = "block"; root.replaceChildren();
+  const P = r.products, D = r.detail, ha = r.physical_identity.area_ha;
+  const NODATA = P.status === "no_wheat_history";
+  const card = () => { const d = document.createElement("div");
+                       d.className = "card"; root.appendChild(d); return d; };
+  const q = (c, head, sub) => {
+    const h = document.createElement("div"); h.className = "qh"; h.textContent = head;
+    const s = document.createElement("div"); s.className = "qs"; s.textContent = sub;
+    c.append(h, s);
+  };
+
+  /* --- header ---------------------------------------------------------- */
+  const head = card();
+  const t = document.createElement("h1");
+  t.textContent = `Your field · ${f1(ha)} ha`;
+  const s = document.createElement("div"); s.className = "sub";
+  s.textContent = `Field reference ${r.field_id} · ${P.evidence} seen by satellite, 2018–2025`;
+  head.append(t, s);
+  const conf = document.createElement("div");
+  conf.className = "badge"; conf.style.marginTop = "10px";
+  const dot = document.createElement("span"); dot.className = "dot";
+  dot.style.background = {high: "var(--good)", moderate: "var(--warning)",
+                          low: "var(--serious)"}[P.confidence] || "var(--muted)";
+  const ct = document.createElement("span");
+  ct.textContent = {high: "Good evidence — several full wheat seasons",
+                    moderate: "Fair evidence — a few full wheat seasons",
+                    low: "Limited evidence — treat as indicative only"}[P.confidence]
+                   || "Evidence unknown";
+  conf.append(dot, ct); head.appendChild(conf);
+
+  /* --- no wheat history: say so plainly, never a broken report ----------- */
+  if (NODATA) {
+    const c0 = card();
+    q(c0, "We can't find wheat here",
+      "The satellite record 2018\u20132025 has no full winter-wheat season inside this boundary");
+    const n = document.createElement("div"); n.className = "note";
+    n.style.marginTop = "4px";
+    n.textContent = "That usually means this ground grew something else \u2014 grass, " +
+      "other crops \u2014 or the boundary doesn't match a cropped field. Gap, ranking " +
+      "and season history need at least one full wheat season, so they are not shown " +
+      "rather than guessed.";
+    c0.appendChild(n);
+    if (P.potential && P.potential.attainable_yield_t_ha != null) {
+      const n2 = document.createElement("div"); n2.className = "note";
+      n2.style.marginTop = "8px";
+      n2.textContent = "For the location itself: the best wheat fields on similar land " +
+        "nearby reach about " + f1(P.potential.attainable_yield_t_ha) +
+        " t/ha \u2014 a property of the area, not of this field.";
+      c0.appendChild(n2);
+    }
+    return;
+  }
+
+  /* --- 1. what you're getting vs what's achievable ----------------------- */
+  const c1 = card();
+  q(c1, "What this field yields, and what it could",
+    "Your recent wheat yields against the best fields on the same land nearby");
+  const typical = D.productive_memory.expected_wheat_yield_t_ha;
+  const best = D.productive_memory.demonstrated_upper_yield_t_ha;
+  const attain = P.potential.attainable_yield_t_ha;
+  const gapT = P.gap.total_gap_t_ha;
+  const achShare = (attain && gapT != null) ? 1 - gapT / attain : null;
+  const rowEl = document.createElement("div"); rowEl.className = "row";
+  const big = document.createElement("div");
+  big.innerHTML = `<div class="big"></div><div class="sub"></div>`;
+  big.querySelector(".big").textContent = f1(gapT);
+  big.querySelector(".big").insertAdjacentHTML("beforeend", " <small>t/ha still to gain</small>");
+  const mv = money(gapT, ha);
+  big.querySelector(".sub").textContent =
+    (achShare ? `already achieving ${Math.round(achShare * 100)}% of achievable — ` : "") +
+    (mv ? `the rest is about ${mv} a year across ${f1(ha)} ha at £${price()}/t`
+        : `across ${f1(ha)} ha`);
+  rowEl.appendChild(big);
+  c1.appendChild(rowEl);
+  const cmp = document.createElement("div"); cmp.className = "compare";
+  const maxv = Math.max(attain || 0, best || 0, typical || 0, 1);
+  [["You, typical season", typical, "--c1"],
+   ["Your best season", best, "--c3"],
+   ["Best fields nearby", attain, "--c6"]].forEach(([lab, v, col]) => {
+    if (v == null) return;
+    const b = document.createElement("div"); b.className = "cbar";
+    b.innerHTML = `<span class="lab"></span><span class="track"><span class="fill"></span></span>
+                   <span class="val"></span>`;
+    b.querySelector(".lab").textContent = lab;
+    b.querySelector(".fill").style.width = (v / maxv * 100).toFixed(1) + "%";
+    b.querySelector(".fill").style.background = `var(${col})`;
+    b.querySelector(".val").textContent = f1(v) + " t/ha";
+    cmp.appendChild(b);
+  });
+  c1.appendChild(cmp);
+  const n1 = document.createElement("div"); n1.className = "note";
+  n1.textContent = "“Best fields nearby” is what the top 5% of wheat within about 6 km " +
+    "actually harvested in their best season — a real yield somebody achieved on this land, " +
+    "not a theoretical maximum. Most fields in Britain sit within about 1 t/ha of each other " +
+    "on this measure, so the gap below it is the number that matters.";
+  c1.appendChild(n1);
+
+  /* --- 2. why ------------------------------------------------------------ */
+  const c2 = card();
+  q(c2, "Where that yield is going",
+    "The gap split into its causes — and which ones you can act on");
+  const causes = Object.entries((P.gap && P.gap.causes_t_ha) || {})
+    .filter(([, v]) => v != null && v > 0).sort((a, b) => b[1] - a[1]);
+  const totalC = causes.reduce((a, [, v]) => a + v, 0);
+  const plot2 = document.createElement("div"); c2.appendChild(plot2);
+  drawCauseBar(plot2, causes, totalC);
+  const list = document.createElement("div"); list.className = "causes";
+  causes.forEach(([k, v]) => {
+    const meta = CAUSES[k];
+    const row = document.createElement("div"); row.className = "cause";
+    const sw = document.createElement("span");
+    sw.className = "sw"; sw.style.background = `var(${meta.c})`;
+    const nm = document.createElement("span"); nm.textContent = meta.name;
+    const amt = document.createElement("span"); amt.className = "amt";
+    const m = money(v, ha);
+    amt.textContent = f2(v) + " t/ha" + (m ? ` · ${m}/yr` : "");
+    const tag = document.createElement("span");
+    tag.className = "tag" + (meta.act ? " act" : ""); tag.textContent = meta.tag;
+    row.append(sw, nm, amt, tag); list.appendChild(row);
+  });
+  c2.appendChild(list);
+  const act = causes.filter(([k]) => CAUSES[k].act).reduce((a, [, v]) => a + v, 0);
+  const v2 = document.createElement("div");
+  v2.className = "verdict"; v2.style.marginTop = "14px";
+  const am = money(act, ha);
+  v2.innerHTML = `At most <b>${f2(act)} t/ha${am ? ` (about ${am}/yr)` : ""}</b> sits in ` +
+    `causes you can influence. The rest is weather, soil and ground you cannot change.`;
+  c2.appendChild(v2);
+  const n2 = document.createElement("div"); n2.className = "note";
+  n2.textContent = "“Management opportunity” is what is left once weather, soil, rotation, " +
+    "ground and margins are accounted for, so it is the MOST that management could recover — " +
+    "not a promise. It also carries what the satellite cannot see: variety, drainage, soil " +
+    "detail finer than our maps, and measurement error. Treat it as the place to look first.";
+  c2.appendChild(n2);
+
+  /* --- 3. where in the field --------------------------------------------- */
+  const c3 = card();
+  q(c3, "How the field performs, acre by acre",
+    "Green on the map is yield achieved; switch to “Opportunity” for where the room is");
+  const w = P.within_field, gmap = D.gap_map;
+  const tl = document.createElement("div"); tl.className = "tiles";
+  const tile = (lab, val, sub) => {
+    const d = document.createElement("div"); d.className = "tile";
+    d.innerHTML = `<div class="lab"></div><div class="val"></div><div class="sub2"></div>`;
+    d.querySelector(".lab").textContent = lab;
+    d.querySelector(".val").textContent = val;
+    d.querySelector(".sub2").textContent = sub || "";
+    tl.appendChild(d);
+  };
+  if (gmap && gmap.performance) {
+    const pf = gmap.performance;
+    tile("Field achieves", Math.round(pf.mean_share * 100) + "%",
+         "of what the best nearby fields reach");
+    if (pf.ha_at_90_pct_or_better > 0)
+      tile("Performing strongly", f1(pf.ha_at_90_pct_or_better) + " ha",
+           "at 90% of achievable or better");
+    if (pf.ha_below_80_pct > 0)
+      tile("Most room to gain", f1(pf.ha_below_80_pct) + " ha", "below 80% of achievable");
+  } else if (gmap) {
+    tile("Ground with 1 t/ha or more to gain", f1(gmap.underperforming_ha_over_1) + " ha",
+         `${Math.round((gmap.share_over_1_t_ha || 0) * 100)}% of the field`);
+  }
+  if (w.areas_ha && w.areas_ha.persistently_constrained) {
+    tile("Always the weakest ground", f1(w.areas_ha.persistently_constrained) + " ha",
+         "underperforms every season");
+  }
+  if (w.areas_ha && w.areas_ha.high_capacity_stable) {
+    tile("Consistently your best ground", f1(w.areas_ha.high_capacity_stable) + " ha",
+         "top of the field every season");
+  }
+  c3.appendChild(tl);
+  if (w.addressable_share != null) {
+    const v3 = document.createElement("div");
+    v3.className = "verdict"; v3.style.marginTop = "14px";
+    const pctv = Math.round(w.addressable_share * 100);
+    v3.innerHTML = pctv >= 40
+      ? `Roughly <b>${pctv}% of the variation inside this field</b> is more than the soil ` +
+        `alone would explain — worth walking.`
+      : `Only about <b>${pctv}% of the variation inside this field</b> is more than the soil ` +
+        `would explain; the pattern mostly follows the ground itself, so evening it out ` +
+        `may cost more than it returns.`;
+    c3.appendChild(v3);
+  }
+  if (D.field_edges && D.field_edges.edge_deficit_t_ha > 0.1) {
+    const n3 = document.createElement("div"); n3.className = "note";
+    n3.textContent = `Your outer 20 m yields ${f1(D.field_edges.edge_mean_t_ha)} t/ha ` +
+      `against ${f1(D.field_edges.interior_mean_t_ha)} t/ha in the middle — a ` +
+      `${f2(D.field_edges.edge_deficit_t_ha)} t/ha shortfall over ` +
+      `${f1(D.field_edges.edge_area_ha)} ha of headland.`;
+    c3.appendChild(n3);
+  }
+
+  /* --- 4. weather risk ---------------------------------------------------- */
+  const c4 = card();
+  q(c4, "What a bad season costs here", "Based on the eight seasons we have watched");
+  const k = P.climate_risk, o = k.outlook || {};
+  const tl4 = document.createElement("div"); tl4.className = "tiles";
+  const tile4 = (lab, val, sub) => {
+    const d = document.createElement("div"); d.className = "tile";
+    d.innerHTML = `<div class="lab"></div><div class="val"></div><div class="sub2"></div>`;
+    d.querySelector(".lab").textContent = lab;
+    d.querySelector(".val").textContent = val;
+    d.querySelector(".sub2").textContent = sub || "";
+    tl4.appendChild(d);
+  };
+  if (o.chance_of_costly_season != null)
+    tile4("Seasons hurt by weather", Math.round(o.chance_of_costly_season * 8) + " in 8",
+          "cost more than 0.5 t/ha");
+  if (o.bad_season_loss_t_ha != null) {
+    const bm = money(o.bad_season_loss_t_ha, ha);
+    tile4("A bad season costs", f1(o.bad_season_loss_t_ha) + " t/ha",
+          (bm ? bm + " · " : "") + (o.bad_season_example ? `like ${o.bad_season_example}` : ""));
+  }
+  if (o.typical_annual_loss_t_ha != null)
+    tile4("Weather costs you, on average", f1(o.typical_annual_loss_t_ha) + " t/ha",
+          "long-run average");
+  c4.appendChild(tl4);
+  if (k.dominant_hazard) {
+    const v4 = document.createElement("div");
+    v4.className = "verdict"; v4.style.marginTop = "14px";
+    const p = k.dominant_hazard_percentile_gb;
+    v4.innerHTML = `The weather risk here is mostly <b>${HAZARD[k.dominant_hazard]}</b>` +
+      (p != null ? ` — this location gets them more often than ${p}% of British wheat ground.` : ".");
+    c4.appendChild(v4);
+  }
+  const n4 = document.createElement("div"); n4.className = "note";
+  n4.textContent = "Eight seasons is a short record, so read these as rough odds rather than " +
+    "predictions. They describe the weather this location has had, not a forecast or a " +
+    "climate-change projection.";
+  c4.appendChild(n4);
+
+  /* --- 5. how you compare -------------------------------------------------- */
+  const rk = P.ranking;
+  if (rk && rk.vs_neighbours_20km != null) {
+    const c5 = card();
+    q(c5, "How you compare", "Against other wheat fields, on the gap below achievable");
+    const v5 = document.createElement("div"); v5.className = "verdict";
+    const nb = Math.round(rk.vs_neighbours_20km), sm = rk.vs_similar_fields_gb == null
+      ? null : Math.round(rk.vs_similar_fields_gb);
+    v5.innerHTML = `You are ahead of <b>${nb}%</b> of wheat fields within 20 km` +
+      (sm != null ? `, and <b>${sm}%</b> of fields on similar soil and climate across Britain.` : ".");
+    c5.appendChild(v5);
+    const cmp5 = document.createElement("div"); cmp5.className = "compare";
+    [["Local fields (20 km)", nb, "--c1"],
+     ["Similar fields, GB", sm, "--c3"]].forEach(([lab, v, col]) => {
+      if (v == null) return;
+      const b = document.createElement("div"); b.className = "cbar";
+      b.innerHTML = `<span class="lab"></span><span class="track"><span class="fill"></span></span>
+                     <span class="val"></span>`;
+      b.querySelector(".lab").textContent = lab;
+      b.querySelector(".fill").style.width = v + "%";
+      b.querySelector(".fill").style.background = `var(${col})`;
+      b.querySelector(".val").textContent = v + "%";
+      cmp5.appendChild(b);
+    });
+    c5.appendChild(cmp5);
+  }
+
+  /* --- detail -------------------------------------------------------------- */
+  const cd = card();
+  cd.innerHTML = `<details><summary>Season-by-season detail</summary><div class="dwrap"></div></details>`;
+  const dw = cd.querySelector(".dwrap");
+  const sd = D.season_detail, years = Object.keys(sd).sort();
+  const yp = document.createElement("div"); yp.style.marginTop = "12px"; dw.appendChild(yp);
+  drawSeasons(yp, years, sd, attain);
+  const part = years.filter(y => sd[y].eo_wheat_season && !sd[y].full_season);
+  if (part.length) {
+    const n = document.createElement("div"); n.className = "note";
+    n.textContent = "Seasons not shown, because wheat covered less than 80% of the boundary " +
+      "(so the average would not be your field's): " +
+      part.map(y => `${y} (${Math.round(sd[y].cover_of_polygon * 100)}%)`).join(", ") + ".";
+    dw.appendChild(n);
+  }
+  const ch = document.createElement("div"); ch.className = "chips";
+  for (const [yr, crop] of Object.entries(D.crop_history || {})) {
+    const c = document.createElement("div");
+    c.className = "chip" + (String(crop).startsWith("winter wheat") ? " wheat" : "");
+    const b = document.createElement("b"); b.textContent = yr + " ";
+    const sp = document.createElement("span"); sp.textContent = crop;
+    c.append(b, sp); ch.appendChild(c);
+  }
+  if (ch.childElementCount) {          // no crop history -> no dangling caption
+    const chh = document.createElement("div"); chh.className = "note";
+    chh.textContent = "Cropping we detected from satellite (may differ from your records):";
+    dw.append(chh, ch);
+  }
+  const tbl = document.createElement("table");
+  tbl.innerHTML = `<thead><tr><th>season</th><th>your yield</th><th>wheat cover</th></tr></thead><tbody></tbody>`;
+  const tb = tbl.querySelector("tbody");
+  years.forEach(yr => {
+    const row = sd[yr], tr = document.createElement("tr");
+    [yr, row.full_season ? f1(row.mean_yield_t_ha) + " t/ha" : "—",
+     row.eo_wheat_season ? Math.round(row.cover_of_polygon * 100) + "%" : "no wheat"]
+      .forEach(v => { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); });
+    tb.appendChild(tr);
+  });
+  dw.appendChild(tbl);
+  const foot = document.createElement("div"); foot.className = "note";
+  foot.textContent = "Yields are estimated from satellite imagery, not measured at the " +
+    "weighbridge, and carry roughly ±1 t/ha of uncertainty on any single field-season. " +
+    "The patterns across seasons and within the field are more reliable than any one number.";
+  dw.appendChild(foot);
+}
+
+/* ---------- charts --------------------------------------------------------- */
+function frame(node, W, H, pad) {
+  node.replaceChildren();
+  const svg = el("svg", {viewBox: `0 0 ${W} ${H}`, width: "100%",
+                         style: "display:block;max-width:720px"}, node);
+  return {svg, x0: pad[3], x1: W - pad[1], y0: H - pad[2], y1: pad[0]};
+}
+function drawCauseBar(node, causes, total) {
+  if (!total) return;
+  const F = frame(node, 720, 52, [8, 8, 10, 8]);
+  let x = F.x0;
+  const wTot = F.x1 - F.x0;
+  causes.forEach(([k, v], i) => {
+    const w = (v / total) * wTot - (i < causes.length - 1 ? 2 : 0);
+    const rect = el("rect", {x, y: 8, width: Math.max(w, 0), height: 26, rx: 4,
+                             fill: `var(${CAUSES[k].c})`}, F.svg);
+    if (w > 46)
+      el("text", {x: x + w / 2, y: 25, "text-anchor": "middle", class: "dlab",
+                  fill: "#ffffff", style: "font-weight:600"}, F.svg)
+        .textContent = Math.round(v / total * 100) + "%";
+    rect.addEventListener("pointermove", e => showTip(e, [
+      {color: cssVar(CAUSES[k].c), label: CAUSES[k].name, value: v.toFixed(2) + " t/ha"}]));
+    rect.addEventListener("pointerleave", hideTip);
+    x += w + 2;
+  });
+}
+function drawSeasons(node, years, sd, attain) {
+  const F = frame(node, 720, 200, [14, 96, 26, 34]);
+  const vals = years.map(y => sd[y].full_season ? sd[y].mean_yield_t_ha : null);
+  const ymax = Math.ceil(Math.max(...vals.filter(v => v != null), attain || 0, 1) + 0.5);
+  const sy = v => F.y0 - (v / ymax) * (F.y0 - F.y1);
+  for (let g = 0; g <= ymax; g += 2) {
+    el("line", {x1: F.x0, x2: F.x1, y1: sy(g), y2: sy(g), stroke: "var(--grid)",
+                "stroke-width": 1}, F.svg);
+    el("text", {x: F.x0 - 6, y: sy(g) + 4, "text-anchor": "end", class: "axis"}, F.svg)
+      .textContent = g;
+  }
+  el("line", {x1: F.x0, x2: F.x1, y1: F.y0, y2: F.y0, stroke: "var(--baseline)",
+              "stroke-width": 1}, F.svg);
+  const band = (F.x1 - F.x0) / years.length, bw = Math.min(26, band * 0.55);
+  years.forEach((yr, i) => {
+    const cx = F.x0 + band * (i + 0.5);
+    el("text", {x: cx, y: F.y0 + 16, "text-anchor": "middle", class: "axis"}, F.svg)
+      .textContent = yr;
+    const v = sd[yr].full_season ? sd[yr].mean_yield_t_ha : null;
+    const hit = el("rect", {x: cx - band / 2, y: F.y1, width: band, height: F.y0 - F.y1,
+                            fill: "transparent"}, F.svg);
+    if (v == null) {
+      el("circle", {cx, cy: F.y0 - 5, r: 3.5, fill: "var(--baseline)"}, F.svg);
+      hit.addEventListener("pointermove", e => showTip(e, [
+        {label: `${yr}`, value: sd[yr].eo_wheat_season ? "part of the field only" : "no wheat"}]));
+      hit.addEventListener("pointerleave", hideTip);
+      return;
+    }
+    const p = el("path", {d: barPath(cx - bw / 2, bw, F.y0, sy(v)), fill: "var(--c1)"}, F.svg);
+    el("text", {x: cx, y: sy(v) - 5, "text-anchor": "middle", class: "dlab"}, F.svg)
+      .textContent = f1(v);
+    hit.addEventListener("pointermove", e => showTip(e, [
+      {color: cssVar("--c1"), label: `${yr} harvest`, value: f1(v) + " t/ha"}]));
+    hit.addEventListener("pointerleave", hideTip);
+    hit.addEventListener("pointerenter", () => p.setAttribute("opacity", "0.85"));
+    hit.addEventListener("pointerout", () => p.setAttribute("opacity", "1"));
+  });
+  if (attain != null) {
+    el("line", {x1: F.x0, x2: F.x1, y1: sy(attain), y2: sy(attain),
+                stroke: "var(--c6)", "stroke-width": 2}, F.svg);
+    el("text", {x: F.x1 + 6, y: sy(attain) + 4, class: "dlab-strong"}, F.svg)
+      .textContent = `${f1(attain)} best nearby`;
+  }
+}
+</script>
+</body>
+</html>

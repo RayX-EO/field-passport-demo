@@ -1,0 +1,178 @@
+[
+ {
+  "farm_id": "FARM-01",
+  "label": "FARM-01 \u2014 dry, warm, heavy land",
+  "file": "FARM-01/farm.json",
+  "environment": {
+   "description": "dry, warm, heavy land",
+   "annual_rainfall_mm": 693,
+   "mean_temperature_c": 10.5,
+   "annual_sunshine": 3748.4,
+   "topsoil_clay_pct": 32.1,
+   "elevation_m": -2,
+   "centre_bng": [
+    532967,
+    284854
+   ]
+  },
+  "n_fields": 15,
+  "total_area_ha": 123.4,
+  "gap_t_ha": 1.85,
+  "value_gbp": 43400,
+  "dominant_cause": "other_management"
+ },
+ {
+  "farm_id": "FARM-02",
+  "label": "FARM-02 \u2014 wet, cool, light land",
+  "file": "FARM-02/farm.json",
+  "environment": {
+   "description": "wet, cool, light land",
+   "annual_rainfall_mm": 846,
+   "mean_temperature_c": 8.6,
+   "annual_sunshine": 3471.8,
+   "topsoil_clay_pct": 18.9,
+   "elevation_m": 120,
+   "centre_bng": [
+    416997,
+    514804
+   ]
+  },
+  "n_fields": 15,
+  "total_area_ha": 151.0,
+  "gap_t_ha": 2.35,
+  "value_gbp": 67600,
+  "dominant_cause": "other_management"
+ },
+ {
+  "farm_id": "FARM-03",
+  "label": "FARM-03 \u2014 wet, warm, light land",
+  "file": "FARM-03/farm.json",
+  "environment": {
+   "description": "wet, warm, light land",
+   "annual_rainfall_mm": 813,
+   "mean_temperature_c": 11.1,
+   "annual_sunshine": 4170.3,
+   "topsoil_clay_pct": 20.0,
+   "elevation_m": 15,
+   "centre_bng": [
+    600997,
+    170794
+   ]
+  },
+  "n_fields": 15,
+  "total_area_ha": 151.8,
+  "gap_t_ha": 2.45,
+  "value_gbp": 70500,
+  "dominant_cause": "other_management"
+ },
+ {
+  "farm_id": "FARM-04",
+  "label": "FARM-04 \u2014 wet, mild, light land",
+  "file": "FARM-04/farm.json",
+  "environment": {
+   "description": "wet, mild, light land",
+   "annual_rainfall_mm": 927,
+   "mean_temperature_c": 9.7,
+   "annual_sunshine": 3902.7,
+   "topsoil_clay_pct": 21.2,
+   "elevation_m": 58,
+   "centre_bng": [
+    286609,
+    100966
+   ]
+  },
+  "n_fields": 15,
+  "total_area_ha": 96.3,
+  "gap_t_ha": 2.19,
+  "value_gbp": 40100,
+  "dominant_cause": "other_management"
+ },
+ {
+  "farm_id": "FARM-05",
+  "label": "FARM-05 \u2014 moderate-rainfall, mild, heavy land, upland",
+  "file": "FARM-05/farm.json",
+  "environment": {
+   "description": "moderate-rainfall, mild, heavy land, upland",
+   "annual_rainfall_mm": 752,
+   "mean_temperature_c": 9.7,
+   "annual_sunshine": 3710.9,
+   "topsoil_clay_pct": 30.9,
+   "elevation_m": 133,
+   "centre_bng": [
+    459289,
+    264670
+   ]
+  },
+  "n_fields": 15,
+  "total_area_ha": 139.3,
+  "gap_t_ha": 3.78,
+  "value_gbp": 100100,
+  "dominant_cause": "other_management"
+ },
+ {
+  "farm_id": "FARM-06",
+  "label": "FARM-06 \u2014 dry, warm, light land",
+  "file": "FARM-06/farm.json",
+  "environment": {
+   "description": "dry, warm, light land",
+   "annual_rainfall_mm": 689,
+   "mean_temperature_c": 10.4,
+   "annual_sunshine": 4037.1,
+   "topsoil_clay_pct": 20.2,
+   "elevation_m": 64,
+   "centre_bng": [
+    619032,
+    255142
+   ]
+  },
+  "n_fields": 15,
+  "total_area_ha": 163.2,
+  "gap_t_ha": 2.42,
+  "value_gbp": 75100,
+  "dominant_cause": "weather"
+ },
+ {
+  "farm_id": "FARM-07",
+  "label": "FARM-07 \u2014 moderate-rainfall, cool, light land",
+  "file": "FARM-07/farm.json",
+  "environment": {
+   "description": "moderate-rainfall, cool, light land",
+   "annual_rainfall_mm": 751,
+   "mean_temperature_c": 9.4,
+   "annual_sunshine": 3490.2,
+   "topsoil_clay_pct": 17.2,
+   "elevation_m": 54,
+   "centre_bng": [
+    439178,
+    462889
+   ]
+  },
+  "n_fields": 15,
+  "total_area_ha": 140.9,
+  "gap_t_ha": 1.96,
+  "value_gbp": 52600,
+  "dominant_cause": "weather"
+ },
+ {
+  "farm_id": "FARM-08",
+  "label": "FARM-08 \u2014 moderate-rainfall, cool, medium land",
+  "file": "FARM-08/farm.json",
+  "environment": {
+   "description": "moderate-rainfall, cool, medium land",
+   "annual_rainfall_mm": 735,
+   "mean_temperature_c": 9.4,
+   "annual_sunshine": 3866.7,
+   "topsoil_clay_pct": 24.4,
+   "elevation_m": 15,
+   "centre_bng": [
+    499228,
+    445128
+   ]
+  },
+  "n_fields": 15,
+  "total_area_ha": 116.0,
+  "gap_t_ha": 3.2,
+  "value_gbp": 70600,
+  "dominant_cause": "other_management"
+ }
+]

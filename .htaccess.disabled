@@ -1,0 +1,8 @@
+# Example field boundaries come from UKCEH LCCM; same credentials as the yield maps.
+AuthType Basic
+AuthName "UK Winter Wheat Yield Maps"
+AuthUserFile /gws/ssde/j25a/nceo_isp/public/yield_production/uk_wheat_yield_bng/.htpasswd
+Require valid-user
+<Files ".htaccess">
+  Require all denied
+</Files>
