@@ -15,39 +15,46 @@
 <style>
   .viz-root {
     color-scheme: light;
-    --page: #f9f9f7; --surface-1: #fcfcfb;
-    --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
-    --grid: #e1e0d9; --baseline: #c3c2b7; --border: rgba(11,11,11,0.10);
-    --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a;
-    --c4: #eda100; --c5: #e87ba4; --c6: #008300;
-    --neutral: #dedcd6; --seq-track: #cde2fb;
+    /* rayx.co.uk: paper / ink / signal / prism / line */
+    --page: #F7F9FC; --surface-1: #FFFFFF;
+    --ink: #111620; --ink-2: #39424F; --muted: #5A6472;
+    --grid: #E6ECF1; --baseline: #D6DCE5; --border: #D6DCE5;
+    --signal: #6A86B6; --prism: #8F82D4;
+    --c1: #6A86B6; --c2: #C08246; --c3: #3FA98A;
+    --c4: #C08246; --c5: #B05A78; --c6: #4f8f3c;
+    --neutral: #E6ECF1; --seq-track: #E6ECF1;
+    --radius-md: 20px; --radius-sm: 10px;
     --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
   }
   @media (prefers-color-scheme: dark) {
     :root:where(:not([data-theme="light"])) .viz-root {
       color-scheme: dark;
-      --page: #0d0d0d; --surface-1: #1a1a19;
-      --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
-      --grid: #2c2c2a; --baseline: #383835; --border: rgba(255,255,255,0.10);
-      --c1: #3987e5; --c2: #d95926; --c3: #199e70;
-      --c4: #c98500; --c5: #d55181; --c6: #008300;
-      --neutral: #383835; --seq-track: #104281;
+      --page: #0A0D12; --surface-1: #141922;
+      --ink: #FFFFFF; --ink-2: #AEB7C5; --muted: #8A92A1;
+      --grid: #1F2630; --baseline: #2A323E; --border: rgba(214,220,229,0.14);
+      --signal: #8AA4CE; --prism: #A99EE0;
+      --c1: #8AA4CE; --c2: #C08246; --c3: #3FA98A;
+      --c4: #C08246; --c5: #B05A78; --c6: #6aa84f;
+      --neutral: #2A323E; --seq-track: #1F2630;
+      --radius-md: 20px; --radius-sm: 10px;
     }
   }
   :root[data-theme="dark"] .viz-root {
     color-scheme: dark;
-    --page: #0d0d0d; --surface-1: #1a1a19;
-    --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
-    --grid: #2c2c2a; --baseline: #383835; --border: rgba(255,255,255,0.10);
-    --c1: #3987e5; --c2: #d95926; --c3: #199e70;
-    --c4: #c98500; --c5: #d55181; --c6: #008300;
-    --neutral: #383835; --seq-track: #104281;
+    --page: #0A0D12; --surface-1: #141922;
+    --ink: #FFFFFF; --ink-2: #AEB7C5; --muted: #8A92A1;
+    --grid: #1F2630; --baseline: #2A323E; --border: rgba(214,220,229,0.14);
+    --signal: #8AA4CE; --prism: #A99EE0;
+    --c1: #8AA4CE; --c2: #C08246; --c3: #3FA98A;
+    --c4: #C08246; --c5: #B05A78; --c6: #6aa84f;
+    --neutral: #2A323E; --seq-track: #1F2630;
+    --radius-md: 20px; --radius-sm: 10px;
   }
   * { box-sizing: border-box; }
   /* rayx.co.uk uses JetBrains Mono for technical meta: units,
      small labels, legends, footnotes */
   .note, .legend, .dlab, .dlab-strong, .cbar, .money, .axis,
-  .chip, .badge, .filter {
+  .chip, .filter {
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular,
                  Menlo, monospace;
     font-variant-ligatures: none;
@@ -66,7 +73,7 @@
   #map { flex: 1; min-height: 280px; }
   #right { overflow-y: auto; padding: 20px 26px 70px; }
   button, .filebtn { background: var(--surface-1); color: var(--ink);
-    border: 1px solid var(--border); border-radius: 6px; padding: 7px 13px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 14px;
     font: inherit; font-size: 13px; cursor: pointer; }
   button:hover, .filebtn:hover { border-color: var(--muted); }
   .filebtn.primary { background: var(--c1); color: #fff; border-color: transparent; font-weight: 600; }
@@ -74,9 +81,24 @@
     border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font: inherit; }
   #status { font-size: 13px; color: var(--ink-2); }
   .card { background: var(--surface-1); border: 1px solid var(--border);
-          border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
-  .qh { font-size: 15px; font-weight: 600; margin: 0 0 3px; }
-  .qs { font-size: 12.5px; color: var(--muted); margin: 0 0 14px; }
+          border-radius: var(--radius-md); padding: 22px 24px; margin-bottom: 18px; }
+  /* numbered sections, as on the one-pager: "01 /" in signal, then the
+     title in uppercase mono */
+  .qh { display: flex; gap: 9px; align-items: baseline; margin: 0 0 6px;
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 12.5px; font-weight: 600; letter-spacing: .015em;
+        text-transform: uppercase; line-height: 1.35; }
+  .qh .qn { color: var(--signal); font-weight: 400; flex: none; }
+  .qs { font-size: 12.5px; color: var(--ink-2); margin: 0 0 16px; }
+  /* masthead, mirroring the one-pager's header band */
+  .masthead { display: flex; align-items: baseline; justify-content: space-between;
+              gap: 16px; padding: 0 2px 12px; margin-bottom: 18px;
+              border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .masthead .wm { font-size: 21px; font-weight: 700; letter-spacing: -.01em; }
+  .masthead .meta { font-family: 'JetBrains Mono', ui-monospace, monospace;
+                    font-size: 11px; color: var(--muted); text-align: right;
+                    line-height: 1.6; }
+  .masthead .meta b { color: var(--signal); font-weight: 400; }
   h1 { font-size: 19px; font-weight: 600; margin: 0; }
   .sub { color: var(--ink-2); font-size: 13px; margin-top: 3px; }
   .big { font-size: 46px; font-weight: 600; line-height: 1.05; }
@@ -102,7 +124,7 @@
                 border: 1px solid var(--border); color: var(--ink-2); white-space: nowrap; }
   .cause .tag.act { border-color: var(--good); color: var(--good); font-weight: 600; }
   .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-  .tile { border: 1px solid var(--border); border-radius: 9px; padding: 12px 14px; }
+  .tile { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
   .tile .lab { font-size: 12px; color: var(--ink-2); }
   .tile .val { font-size: 24px; font-weight: 600; margin-top: 3px; }
   .tile .sub2 { font-size: 12px; color: var(--muted); margin-top: 3px; }
@@ -129,7 +151,7 @@
   td { text-align: right; padding: 5px 8px; border-bottom: 1px solid var(--grid);
        font-variant-numeric: tabular-nums; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .chip { border: 1px solid var(--border); border-radius: 6px; padding: 5px 9px;
+  .chip { border: 1px solid var(--border); border-radius: 7px; padding: 5px 9px;
           font-size: 12px; color: var(--ink-2); }
   .chip b { color: var(--ink); font-weight: 600; }
   .chip.wheat { border-color: var(--c1); }
@@ -213,10 +235,10 @@ function setStatus(m, err) {
    help targeting. The default view is what the ground ACHIEVED of what is
    achievable (green, darker = better); the loss view stays one click away. */
 let gapLayer = null, perfLayer = null;
-/* yield raster: YlOrBr, sampled off the extremes so both ends stay legible
-   over imagery (dark = more of the achievable yield reached) */
-const PERF_RAMP = ["#fff7be", "#fecc61", "#f5851f", "#c84a02", "#812d05"];
-const PERF_OPACITY = [0.72, 0.68, 0.64, 0.60, 0.58];
+/* yield achieved stays GREEN: more of the achievable yield reached is
+   good news, and green is the only ramp that says so without a legend */
+const PERF_RAMP = ["#c9e0b8", "#8dc06a", "#4f8f3c", "#2f6b25", "#12301a"];
+const PERF_OPACITY = [0.62, 0.60, 0.58, 0.56, 0.54];
 const GAP_RAMP = ["#fde3d3", "#f8b990", "#ef8a4e", "#d95926", "#9c3a12"];
 const GAP_OPACITY = [0.25, 0.42, 0.55, 0.65, 0.75];
 function makeLegend(title, ramp, labels, note) {
@@ -725,13 +747,34 @@ function render(r) {
   const NODATA = P.status === "no_wheat_history";
   const card = () => { const d = document.createElement("div");
                        d.className = "card"; root.appendChild(d); return d; };
-  const q = (c, head, sub) => {
-    const h = document.createElement("div"); h.className = "qh"; h.textContent = head;
+  /* sections carry a running number, as on the one-pager; pass num=null
+     for a card that is not part of the numbered sequence */
+  let qn = 0;
+  const q = (c, head, sub, num) => {
+    const h = document.createElement("div"); h.className = "qh";
+    if (num !== null) {
+      const b = document.createElement("span"); b.className = "qn";
+      b.textContent = String(num || ++qn).padStart(2, "0") + " /";
+      h.appendChild(b);
+    }
+    const tx = document.createElement("span"); tx.textContent = head;
+    h.appendChild(tx);
     const s = document.createElement("div"); s.className = "qs"; s.textContent = sub;
     c.append(h, s);
   };
 
-  /* --- header ---------------------------------------------------------- */
+  /* --- masthead + header ------------------------------------------------ */
+  const mast = document.createElement("div"); mast.className = "masthead";
+  const wm = document.createElement("div"); wm.className = "wm";
+  wm.textContent = "FIELD PASSPORT";
+  const mm = document.createElement("div"); mm.className = "meta";
+  const seasons = (D.evidence && D.evidence.full_seasons) || 0;
+  mm.innerHTML = "<b>UK WINTER WHEAT</b><br>" +
+                 `${f1(ha)} HA · ${seasons} FULL SEASON${seasons === 1 ? "" : "S"}` +
+                 "<br>2018\u20132025 · 10 M RESOLUTION";
+  mast.append(wm, mm);
+  root.appendChild(mast);
+
   const head = card();
   const t = document.createElement("h1");
   t.textContent = `Your field · ${f1(ha)} ha`;
@@ -754,7 +797,7 @@ function render(r) {
   if (NODATA) {
     const c0 = card();
     q(c0, "We can't find wheat here",
-      "The satellite record 2018\u20132025 has no full winter-wheat season inside this boundary");
+      "The satellite record 2018\u20132025 has no full winter-wheat season inside this boundary", null);
     const n = document.createElement("div"); n.className = "note";
     n.style.marginTop = "4px";
     n.textContent = "That usually means this ground grew something else \u2014 grass, " +
