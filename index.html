@@ -126,13 +126,25 @@
   .cbar.pct { grid-template-columns: 128px 1fr 74px; }
   .cbar.bench .track { background: transparent; box-shadow: inset 0 0 0 1px var(--baseline); }
   .cbar.bench .fill { background: var(--grid) !important; }
-  .causes { display: flex; flex-direction: column; gap: 9px; margin-top: 6px; }
-  .cause { display: grid; grid-template-columns: 13px 1fr auto auto; gap: 11px;
+  /* every row shares ONE set of column tracks (subgrid) so the t/ha and
+     the £ line up down the list; when each .cause was its own grid the
+     variable-length tags pushed the money to a different x on each row */
+  .causes { display: grid; margin-top: 6px;
+            grid-template-columns: 13px 1fr max-content max-content max-content;
+            gap: 0 11px; }
+  .cause { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1;
            align-items: center; font-size: 13.5px; padding: 7px 0;
            border-bottom: 1px solid var(--grid); }
+  @supports not (grid-template-columns: subgrid) {
+    .causes { display: flex; flex-direction: column; }
+    .cause { grid-template-columns: 13px 1fr 78px 86px max-content; }
+  }
   .cause:last-child { border-bottom: none; }
   .cause .sw { width: 13px; height: 13px; border-radius: 3px; }
-  .cause .amt { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .cause .amt, .cause .gbp { font-weight: 600; text-align: right;
+                             font-variant-numeric: tabular-nums;
+                             white-space: nowrap; }
+  .cause .gbp { color: var(--ink-2); font-weight: 500; }
   .cause .tag { font-size: 11.5px; padding: 3px 9px; border-radius: 999px;
                 border: 1px solid var(--border); color: var(--ink-2); white-space: nowrap; }
   .cause .tag.act { border-color: var(--good); color: var(--good); font-weight: 600; }
@@ -732,6 +744,17 @@ function barPath(x, w, y0, y1) {
 }
 const f1 = v => v == null || Number.isNaN(v) ? "—" : (+v).toFixed(1);
 const f2 = v => v == null || Number.isNaN(v) ? "—" : (+v).toFixed(2);
+/* Same figure, spelled out in full pounds with a thousands separator. The
+   "k" shorthand is fine in prose but not in a column you are meant to
+   compare down: £1.4k against £450 forces a mental conversion. */
+function moneyExact(tPerHa, ha) {
+  const p = price();
+  if (!p || tPerHa == null) return null;
+  const total = tPerHa * ha * p;
+  const r = total >= 1000 ? Math.round(total / 100) * 100 : Math.round(total / 10) * 10;
+  return "£" + r.toLocaleString("en-GB");
+}
+
 function money(tPerHa, ha) {
   const p = price();
   if (!p || tPerHa == null) return null;
@@ -908,12 +931,15 @@ function render(r) {
     const sw = document.createElement("span");
     sw.className = "sw"; sw.style.background = `var(${meta.c})`;
     const nm = document.createElement("span"); nm.textContent = meta.name;
+    /* t/ha and £ are separate cells so each aligns in its own column */
     const amt = document.createElement("span"); amt.className = "amt";
-    const m = money(v, ha);
-    amt.textContent = f2(v) + " t/ha" + (m ? ` · ${m}/yr` : "");
+    amt.textContent = f2(v) + " t/ha";
+    const gbp = document.createElement("span"); gbp.className = "gbp";
+    const m = moneyExact(v, ha);
+    gbp.textContent = m ? `${m}/yr` : "";
     const tag = document.createElement("span");
     tag.className = "tag" + (meta.act ? " act" : ""); tag.textContent = meta.tag;
-    row.append(sw, nm, amt, tag); list.appendChild(row);
+    row.append(sw, nm, amt, gbp, tag); list.appendChild(row);
   });
   c2.appendChild(list);
   const act = causes.filter(([k]) => CAUSES[k].act).reduce((a, [, v]) => a + v, 0);
