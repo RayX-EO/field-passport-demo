@@ -17,9 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 <script src="https://unpkg.com/proj4@2.11.0/dist/proj4.js"></script>
 <style>
   .viz-root {
@@ -204,8 +202,6 @@
 <body class="viz-root">
 <div id="left">
   <div id="toolbar">
-    <label class="filebtn primary">Upload field boundary<input type="file" id="file" accept=".geojson,.json" hidden></label>
-    <span style="color:var(--ink-2)">or draw it on the map</span>
     <span style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)">
       wheat price £<input type="number" id="price" value="190" min="0" step="5">/t</span>
     <button id="themebtn" title="light / dark">◐</button>
@@ -214,14 +210,12 @@
   <div id="map"></div>
 </div>
 <div id="right">
-  <div id="empty"><b>Draw your field boundary</b> with the polygon tool at the top-left of the
-    map, or upload it as a GeoJSON file.<br>You'll get what the field has been yielding, what
-    nearby fields achieve, and where the difference sits.</div>
+  <div id="empty">Loading the demo farms…</div>
   <div id="report" style="display:none"></div>
 </div>
 <div id="tooltip"></div>
 
-<script>window.PASSPORT_CFG = {"mode": "static", "farms": [{"farm_id": "FARM-01", "label": "FARM-01 \u2014 dry, warm, heavy land", "file": "farms/FARM-01/farm.json", "n_fields": 15, "total_area_ha": 123.4, "gap_t_ha": 1.85, "value_gbp": 43400, "environment": {"description": "dry, warm, heavy land", "annual_rainfall_mm": 693, "mean_temperature_c": 10.5, "annual_sunshine": 3748.4, "topsoil_clay_pct": 32.1, "elevation_m": -2, "centre_bng": [532967, 284854]}}, {"farm_id": "FARM-02", "label": "FARM-02 \u2014 wet, cool, light land", "file": "farms/FARM-02/farm.json", "n_fields": 15, "total_area_ha": 151.0, "gap_t_ha": 2.35, "value_gbp": 67600, "environment": {"description": "wet, cool, light land", "annual_rainfall_mm": 846, "mean_temperature_c": 8.6, "annual_sunshine": 3471.8, "topsoil_clay_pct": 18.9, "elevation_m": 120, "centre_bng": [416997, 514804]}}, {"farm_id": "FARM-03", "label": "FARM-03 \u2014 wet, warm, light land", "file": "farms/FARM-03/farm.json", "n_fields": 15, "total_area_ha": 151.8, "gap_t_ha": 2.45, "value_gbp": 70500, "environment": {"description": "wet, warm, light land", "annual_rainfall_mm": 813, "mean_temperature_c": 11.1, "annual_sunshine": 4170.3, "topsoil_clay_pct": 20.0, "elevation_m": 15, "centre_bng": [600997, 170794]}}, {"farm_id": "FARM-04", "label": "FARM-04 \u2014 wet, mild, light land", "file": "farms/FARM-04/farm.json", "n_fields": 15, "total_area_ha": 96.3, "gap_t_ha": 2.19, "value_gbp": 40100, "environment": {"description": "wet, mild, light land", "annual_rainfall_mm": 927, "mean_temperature_c": 9.7, "annual_sunshine": 3902.7, "topsoil_clay_pct": 21.2, "elevation_m": 58, "centre_bng": [286609, 100966]}}, {"farm_id": "FARM-05", "label": "FARM-05 \u2014 moderate-rainfall, mild, heavy land, upland", "file": "farms/FARM-05/farm.json", "n_fields": 15, "total_area_ha": 139.3, "gap_t_ha": 3.78, "value_gbp": 100100, "environment": {"description": "moderate-rainfall, mild, heavy land, upland", "annual_rainfall_mm": 752, "mean_temperature_c": 9.7, "annual_sunshine": 3710.9, "topsoil_clay_pct": 30.9, "elevation_m": 133, "centre_bng": [459289, 264670]}}, {"farm_id": "FARM-06", "label": "FARM-06 \u2014 dry, warm, light land", "file": "farms/FARM-06/farm.json", "n_fields": 15, "total_area_ha": 163.2, "gap_t_ha": 2.42, "value_gbp": 75100, "environment": {"description": "dry, warm, light land", "annual_rainfall_mm": 689, "mean_temperature_c": 10.4, "annual_sunshine": 4037.1, "topsoil_clay_pct": 20.2, "elevation_m": 64, "centre_bng": [619032, 255142]}}, {"farm_id": "FARM-07", "label": "FARM-07 \u2014 moderate-rainfall, cool, light land", "file": "farms/FARM-07/farm.json", "n_fields": 15, "total_area_ha": 140.9, "gap_t_ha": 1.96, "value_gbp": 52600, "environment": {"description": "moderate-rainfall, cool, light land", "annual_rainfall_mm": 751, "mean_temperature_c": 9.4, "annual_sunshine": 3490.2, "topsoil_clay_pct": 17.2, "elevation_m": 54, "centre_bng": [439178, 462889]}}, {"farm_id": "FARM-08", "label": "FARM-08 \u2014 moderate-rainfall, cool, medium land", "file": "farms/FARM-08/farm.json", "n_fields": 15, "total_area_ha": 116.0, "gap_t_ha": 3.2, "value_gbp": 70600, "environment": {"description": "moderate-rainfall, cool, medium land", "annual_rainfall_mm": 735, "mean_temperature_c": 9.4, "annual_sunshine": 3866.7, "topsoil_clay_pct": 24.4, "elevation_m": 15, "centre_bng": [499228, 445128]}}], "examples": [{"id": "GB-WW-E42DFC", "file": "examples/GB-WW-E42DFC.json", "area_ha": 19.5, "gap_t_ha": 3.55, "gap_class": "large", "dominant_cause": "other_management", "seasons": 7, "centroid": [461005, 266497]}, {"id": "GB-WW-15ECC1", "file": "examples/GB-WW-15ECC1.json", "area_ha": 15.7, "gap_t_ha": 2.21, "gap_class": "moderate", "dominant_cause": "weather", "seasons": 6, "centroid": [508977, 232912]}, {"id": "GB-WW-B4BF1C", "file": "examples/GB-WW-B4BF1C.json", "area_ha": 12.2, "gap_t_ha": 2.04, "gap_class": "small", "dominant_cause": "weather", "seasons": 6, "centroid": [427460, 244555]}, {"id": "GB-WW-73BFFA", "file": "examples/GB-WW-73BFFA.json", "area_ha": 11.5, "gap_t_ha": 2.21, "gap_class": "moderate", "dominant_cause": "other_management", "seasons": 5, "centroid": [557880, 210016]}, {"id": "GB-WW-BC1C5F", "file": "examples/GB-WW-BC1C5F.json", "area_ha": 10.7, "gap_t_ha": 2.45, "gap_class": "moderate", "dominant_cause": "other_management", "seasons": 5, "centroid": [593345, 322647]}, {"id": "GB-WW-A67C23", "file": "examples/GB-WW-A67C23.json", "area_ha": 8.9, "gap_t_ha": 2.64, "gap_class": "moderate", "dominant_cause": "other_management", "seasons": 4, "centroid": [550959, 322360]}]};</script>
+<script>window.PASSPORT_CFG = {"mode": "static", "farms": [{"farm_id": "FARM-01", "label": "FARM-01 \u2014 dry, warm, heavy land", "file": "farms/FARM-01/farm.json", "n_fields": 15, "total_area_ha": 123.4, "gap_t_ha": 2.2, "value_gbp": 51500, "environment": {"description": "dry, warm, heavy land", "annual_rainfall_mm": 693, "mean_temperature_c": 10.5, "annual_sunshine": 3748.4, "topsoil_clay_pct": 32.1, "elevation_m": -2, "centre_bng": [532967, 284854]}}, {"farm_id": "FARM-02", "label": "FARM-02 \u2014 wet, cool, light land", "file": "farms/FARM-02/farm.json", "n_fields": 15, "total_area_ha": 151.0, "gap_t_ha": 2.26, "value_gbp": 64900, "environment": {"description": "wet, cool, light land", "annual_rainfall_mm": 846, "mean_temperature_c": 8.6, "annual_sunshine": 3471.8, "topsoil_clay_pct": 18.9, "elevation_m": 120, "centre_bng": [416997, 514804]}}, {"farm_id": "FARM-03", "label": "FARM-03 \u2014 wet, warm, light land", "file": "farms/FARM-03/farm.json", "n_fields": 15, "total_area_ha": 151.8, "gap_t_ha": 2.51, "value_gbp": 72400, "environment": {"description": "wet, warm, light land", "annual_rainfall_mm": 813, "mean_temperature_c": 11.1, "annual_sunshine": 4170.3, "topsoil_clay_pct": 20.0, "elevation_m": 15, "centre_bng": [600997, 170794]}}, {"farm_id": "FARM-04", "label": "FARM-04 \u2014 wet, mild, light land", "file": "farms/FARM-04/farm.json", "n_fields": 15, "total_area_ha": 96.3, "gap_t_ha": 2.17, "value_gbp": 39700, "environment": {"description": "wet, mild, light land", "annual_rainfall_mm": 927, "mean_temperature_c": 9.7, "annual_sunshine": 3902.7, "topsoil_clay_pct": 21.2, "elevation_m": 58, "centre_bng": [286609, 100966]}}, {"farm_id": "FARM-05", "label": "FARM-05 \u2014 moderate-rainfall, mild, heavy land, upland", "file": "farms/FARM-05/farm.json", "n_fields": 15, "total_area_ha": 139.3, "gap_t_ha": 3.38, "value_gbp": 89600, "environment": {"description": "moderate-rainfall, mild, heavy land, upland", "annual_rainfall_mm": 752, "mean_temperature_c": 9.7, "annual_sunshine": 3710.9, "topsoil_clay_pct": 30.9, "elevation_m": 133, "centre_bng": [459289, 264670]}}, {"farm_id": "FARM-06", "label": "FARM-06 \u2014 dry, warm, light land", "file": "farms/FARM-06/farm.json", "n_fields": 15, "total_area_ha": 163.2, "gap_t_ha": 2.33, "value_gbp": 72300, "environment": {"description": "dry, warm, light land", "annual_rainfall_mm": 689, "mean_temperature_c": 10.4, "annual_sunshine": 4037.1, "topsoil_clay_pct": 20.2, "elevation_m": 64, "centre_bng": [619032, 255142]}}, {"farm_id": "FARM-07", "label": "FARM-07 \u2014 moderate-rainfall, cool, light land", "file": "farms/FARM-07/farm.json", "n_fields": 15, "total_area_ha": 140.9, "gap_t_ha": 1.86, "value_gbp": 49900, "environment": {"description": "moderate-rainfall, cool, light land", "annual_rainfall_mm": 751, "mean_temperature_c": 9.4, "annual_sunshine": 3490.2, "topsoil_clay_pct": 17.2, "elevation_m": 54, "centre_bng": [439178, 462889]}}, {"farm_id": "FARM-08", "label": "FARM-08 \u2014 moderate-rainfall, cool, medium land", "file": "farms/FARM-08/farm.json", "n_fields": 15, "total_area_ha": 116.0, "gap_t_ha": 2.98, "value_gbp": 65600, "environment": {"description": "moderate-rainfall, cool, medium land", "annual_rainfall_mm": 735, "mean_temperature_c": 9.4, "annual_sunshine": 3866.7, "topsoil_clay_pct": 24.4, "elevation_m": 15, "centre_bng": [499228, 445128]}}], "examples": [{"id": "GB-WW-E42DFC", "file": "examples/GB-WW-E42DFC.json", "area_ha": 19.5, "gap_t_ha": 3.18, "gap_class": "large", "dominant_cause": "other_management", "seasons": 8, "centroid": [461005, 266497]}, {"id": "GB-WW-15ECC1", "file": "examples/GB-WW-15ECC1.json", "area_ha": 15.7, "gap_t_ha": 2.06, "gap_class": "small", "dominant_cause": "weather", "seasons": 8, "centroid": [508977, 232912]}, {"id": "GB-WW-B4BF1C", "file": "examples/GB-WW-B4BF1C.json", "area_ha": 12.2, "gap_t_ha": 2.09, "gap_class": "moderate", "dominant_cause": "weather", "seasons": 7, "centroid": [427460, 244555]}, {"id": "GB-WW-73BFFA", "file": "examples/GB-WW-73BFFA.json", "area_ha": 11.5, "gap_t_ha": 2.32, "gap_class": "moderate", "dominant_cause": "other_management", "seasons": 9, "centroid": [557880, 210016]}, {"id": "GB-WW-BC1C5F", "file": "examples/GB-WW-BC1C5F.json", "area_ha": 10.7, "gap_t_ha": 2.7, "gap_class": "moderate", "dominant_cause": "other_management", "seasons": 6, "centroid": [593345, 322647]}, {"id": "GB-WW-A67C23", "file": "examples/GB-WW-A67C23.json", "area_ha": 8.9, "gap_t_ha": 2.58, "gap_class": "moderate", "dominant_cause": "other_management", "seasons": 6, "centroid": [550959, 322360]}]};</script>
 <script>
 "use strict";
 /* ---------- map ---------------------------------------------------------- */
@@ -233,24 +227,6 @@ const sat = L.tileLayer(
   {maxZoom: 19, attribution: "Esri World Imagery"});
 sat.addTo(map);
 const layersControl = L.control.layers({"Satellite": sat, "Map": osm}, {}).addTo(map);
-const drawn = new L.FeatureGroup().addTo(map);
-map.addControl(new L.Control.Draw({
-  draw: {polygon: {allowIntersection: false, showArea: true}, rectangle: true,
-         marker: false, circle: false, circlemarker: false, polyline: false},
-  edit: {featureGroup: drawn}}));
-map.on(L.Draw.Event.CREATED, e => { drawn.clearLayers(); drawn.addLayer(e.layer);
-                                    fetchReport(e.layer.toGeoJSON()); });
-map.on(L.Draw.Event.EDITED, e => e.layers.eachLayer(l => fetchReport(l.toGeoJSON())));
-document.getElementById("file").addEventListener("change", ev => {
-  const f = ev.target.files[0]; if (!f) return;
-  f.text().then(txt => {
-    const gj = JSON.parse(txt);
-    drawn.clearLayers();
-    const lyr = L.geoJSON(gj).addTo(drawn);
-    map.fitBounds(lyr.getBounds(), {maxZoom: 16});
-    fetchReport(gj);
-  }).catch(e => setStatus("could not read that file: " + e.message, true));
-});
 document.getElementById("themebtn").onclick = () => {
   const r = document.documentElement, cur = r.getAttribute("data-theme");
   r.setAttribute("data-theme", cur === "dark" ? "light" : cur === "light" ? "dark"
@@ -275,7 +251,7 @@ const PERF_RAMP = ["#c9e0b8", "#8dc06a", "#4f8f3c", "#2f6b25", "#12301a"];
 const PERF_OPACITY = [0.62, 0.60, 0.58, 0.56, 0.54];
 const GAP_RAMP = ["#fde3d3", "#f8b990", "#ef8a4e", "#d95926", "#9c3a12"];
 const GAP_OPACITY = [0.25, 0.42, 0.55, 0.65, 0.75];
-function makeLegend(title, ramp, labels, note) {
+function makeLegend(title, ramp, labels, note, warn) {
   const c = L.control({position: "bottomright"});
   c.onAdd = () => {
     const d = L.DomUtil.create("div");
@@ -296,6 +272,9 @@ function makeLegend(title, ramp, labels, note) {
     if (note) { const n = document.createElement("span");
                 n.style.cssText = "color:var(--muted);font-size:11px;margin-top:3px";
                 n.textContent = note; d.appendChild(n); }
+    if (warn) { const n = document.createElement("span");
+                n.style.cssText = "color:var(--ink-2);font-size:11px;border-left:3px solid var(--warning);padding-left:6px";
+                n.textContent = warn; d.appendChild(n); }
     return d;
   };
   return c;
@@ -406,7 +385,8 @@ function renderGapMap(r) {
   const perf = gm.performance;
   if (perf && perf.grid) {
     perfLegend = makeLegend("Yield achieved", PERF_RAMP, perf.labels,
-                            "of what the best nearby fields reach");
+                            "of what the best nearby fields reach",
+                           gm.reminder ? "Less reliable on this field: Landsat seasons blur patches under about 30 m" : null);
     perfLayer = gridLayer(perf.grid, bandColor(PERF_RAMP, PERF_OPACITY),
       v => "achieving " + perf.labels[v - 1] + " of achievable");
     layersControl.addOverlay(perfLayer, "Yield achieved");
@@ -414,7 +394,8 @@ function renderGapMap(r) {
     map.addControl(perfLegend);
   } else if (perf && perf.bands && perf.bands.features.length) {
     perfLegend = makeLegend("Yield achieved", PERF_RAMP, perf.labels,
-                            "of what the best nearby fields reach");
+                            "of what the best nearby fields reach",
+                           gm.reminder ? "Less reliable on this field: Landsat seasons blur patches under about 30 m" : null);
     perfLayer = L.geoJSON(perf.bands, {
       style: f => {
         const i = f.properties.band - 1;
@@ -430,13 +411,15 @@ function renderGapMap(r) {
   }
   if (gm.grid) {
     gapLegend = makeLegend("Opportunity, t/ha", GAP_RAMP, gm.labels,
-                           "how much more this ground could carry");
+                           "how much more this ground could carry",
+                           gm.reminder ? "Less reliable on this field: Landsat seasons blur patches under about 30 m" : null);
     gapLayer = gridLayer(gm.grid, bandColor(GAP_RAMP, GAP_OPACITY),
       v => "room for " + gm.labels[v - 1] + " more");
     layersControl.addOverlay(gapLayer, "Opportunity (t/ha)");   /* off by default */
   } else if (gm.bands && gm.bands.features.length) {
     gapLegend = makeLegend("Opportunity, t/ha", GAP_RAMP, gm.labels,
-                           "how much more this ground could carry");
+                           "how much more this ground could carry",
+                           gm.reminder ? "Less reliable on this field: Landsat seasons blur patches under about 30 m" : null);
     gapLayer = L.geoJSON(gm.bands, {
       style: f => {
         const i = f.properties.band - 1;
@@ -671,55 +654,14 @@ if (STATIC) {
   document.getElementById("empty").innerHTML =
     (farms.length ? "<b>Pick a farm</b> from the list above."
                   : "<b>Pick an example field</b> from the list above.") + "<br>" +
-    "This is a published, read-only preview: the reports for these fields were computed in " +
-    "advance. Drawing your own boundary runs the same analysis live and needs the analysis " +
-    "service, not this file host.";
+    "This is a read-only demo: the reports for these fields were computed in advance from " +
+    "the satellite record.";
   if (farms.length) loadFarm(farms[0].file);
   else if (CFG.examples.length) loadExample(CFG.examples[0].file);
 }
 
-/* ---------- fetch --------------------------------------------------------- */
-/* the live page is public but the token never is: it comes from a #token=
-   URL fragment (stored, then scrubbed from the address bar) or a one-time
-   prompt — never from the page source */
-function apiToken() {
-  const m = location.hash.match(/token=([^&]+)/);
-  if (m) {
-    localStorage.setItem("passport_token", decodeURIComponent(m[1]));
-    history.replaceState(null, "", location.pathname + location.search);
-  }
-  let tok = localStorage.getItem("passport_token");
-  if (!tok) {
-    tok = (prompt("API token for the passport service:") || "").trim();
-    if (tok) localStorage.setItem("passport_token", tok);
-  }
-  return tok || null;
-}
+/* the report on show, redrawn when the theme or the price changes */
 let last = null;
-async function fetchReport(gj) {
-  if (STATIC) {
-    setStatus("this published preview cannot analyse new boundaries", true);
-    return;
-  }
-  setStatus("reading the satellite record…");
-  document.getElementById("report").style.opacity = 0.45;
-  try {
-    const api = CFG.api || {};
-    const hdrs = {"Content-Type": "application/json"};
-    const tok = api.token || (api.base ? apiToken() : null);
-    if (tok) hdrs["X-Api-Token"] = tok;
-    const res = await fetch((api.base || "") + (api.path || "/api/v2/passport"),
-      {method: "POST", headers: hdrs, body: JSON.stringify(gj)});
-    if (res.status === 401) {           /* stale stored token: re-prompt next try */
-      localStorage.removeItem("passport_token");
-      throw new Error("unauthorised — reload and enter the API token again");
-    }
-    const data = await res.json();
-    if (!res.ok || data.error) throw new Error(data.error || res.statusText);
-    last = data; render(data); renderGapMap(data); setStatus("");
-  } catch (e) { setStatus(e.message, true); }
-  document.getElementById("report").style.opacity = 1;
-}
 
 /* ---------- tooltip / svg helpers ----------------------------------------- */
 const tip = document.getElementById("tooltip");
@@ -790,6 +732,8 @@ function render(r) {
   root.style.display = "block"; root.replaceChildren();
   const P = r.products, D = r.detail, ha = r.physical_identity.area_ha;
   const NODATA = P.status === "no_wheat_history";
+  const RECORD = ((D.evidence && D.evidence.record) || "2018-2025").replace("-", "\u2013");
+  const LANDSAT = Object.values(D.season_detail || {}).some(s => s.sensor === "landsat");
   const card = () => { const d = document.createElement("div");
                        d.className = "card"; root.appendChild(d); return d; };
   /* sections carry a running number, as on the one-pager; pass num=null
@@ -816,7 +760,7 @@ function render(r) {
   const seasons = (D.evidence && D.evidence.full_seasons) || 0;
   mm.innerHTML = "<b>UK WINTER WHEAT</b><br>" +
                  `${f1(ha)} HA · ${seasons} FULL SEASON${seasons === 1 ? "" : "S"}` +
-                 "<br>2018\u20132025 · 10 M RESOLUTION";
+                 `<br>${RECORD} · ${LANDSAT ? "LANDSAT + SENTINEL-2" : "10 M RESOLUTION"}`;
   mast.append(wm, mm);
   root.appendChild(mast);
 
@@ -824,7 +768,7 @@ function render(r) {
   const t = document.createElement("h1");
   t.textContent = `Your field · ${f1(ha)} ha`;
   const s = document.createElement("div"); s.className = "sub";
-  s.textContent = `Field reference ${r.field_id} · ${P.evidence} seen by satellite, 2018–2025`;
+  s.textContent = `Field reference ${r.field_id} · ${P.evidence} seen by satellite, ${RECORD}`;
   head.append(t, s);
   const conf = document.createElement("div");
   conf.className = "badge"; conf.style.marginTop = "10px";
@@ -842,7 +786,7 @@ function render(r) {
   if (NODATA) {
     const c0 = card();
     q(c0, "We can't find wheat here",
-      "The satellite record 2018\u20132025 has no full winter-wheat season inside this boundary", null);
+      `The satellite record ${RECORD} has no full winter-wheat season inside this boundary`, null);
     const n = document.createElement("div"); n.className = "note";
     n.style.marginTop = "4px";
     n.textContent = "That usually means this ground grew something else \u2014 grass, " +
@@ -1001,6 +945,12 @@ function render(r) {
          "top of the field every season");
   }
   c3.appendChild(tl);
+  if (w.reminder) {                   /* fewer than 3 Sentinel-2 seasons, Landsat among them */
+    const rm = document.createElement("div"); rm.className = "note";
+    rm.style.cssText = "color:var(--ink-2);border-left:3px solid var(--warning);padding-left:9px";
+    rm.textContent = w.reminder;
+    c3.appendChild(rm);
+  }
   if (w.addressable_share != null) {
     const v3 = document.createElement("div");
     v3.className = "verdict"; v3.style.marginTop = "14px";
@@ -1024,7 +974,9 @@ function render(r) {
 
   /* --- 4. weather risk ---------------------------------------------------- */
   const c4 = card();
-  q(c4, "What a bad season costs here", "Based on the eight seasons we have watched");
+  const nWatched = (P.climate_risk && P.climate_risk.outlook && P.climate_risk.outlook.n_seasons) || null;
+  q(c4, "What a bad season costs here",
+    nWatched ? `Based on the ${nWatched} seasons we have watched` : "Based on the seasons we have watched");
   const k = P.climate_risk, o = k.outlook || {};
   const tl4 = document.createElement("div"); tl4.className = "tiles";
   const tile4 = (lab, val, sub) => {
@@ -1036,7 +988,8 @@ function render(r) {
     tl4.appendChild(d);
   };
   if (o.chance_of_costly_season != null)
-    tile4("Seasons hurt by weather", Math.round(o.chance_of_costly_season * 8) + " in 8",
+    tile4("Seasons hurt by weather",
+          Math.round(o.chance_of_costly_season * (o.n_seasons || 8)) + " in " + (o.n_seasons || 8),
           "cost more than 0.5 t/ha");
   if (o.bad_season_loss_t_ha != null) {
     const bm = money(o.bad_season_loss_t_ha, ha);
@@ -1056,7 +1009,7 @@ function render(r) {
     c4.appendChild(v4);
   }
   const n4 = document.createElement("div"); n4.className = "note";
-  n4.textContent = "Eight seasons is a short record, so read these as rough odds rather than " +
+  n4.textContent = (nWatched ? `${nWatched} seasons is` : "This is") + " a short record, so read these as rough odds rather than " +
     "predictions. They describe the weather this location has had, not a forecast or a " +
     "climate-change projection.";
   c4.appendChild(n4);
@@ -1095,6 +1048,12 @@ function render(r) {
   const sd = D.season_detail, years = Object.keys(sd).sort();
   const yp = document.createElement("div"); yp.style.marginTop = "12px"; dw.appendChild(yp);
   drawSeasons(yp, years, sd, attain);
+  if (years.some(y => sd[y].sensor === "landsat")) {
+    const ln = document.createElement("div"); ln.className = "note";
+    ln.textContent = "Paler bars are Landsat seasons: 30 m pixels resampled to 10 m. The others are " +
+      "Sentinel-2, at 10 m.";
+    dw.appendChild(ln);
+  }
   const part = years.filter(y => sd[y].eo_wheat_season && !sd[y].full_season);
   if (part.length) {
     const n = document.createElement("div"); n.className = "note";
@@ -1117,11 +1076,12 @@ function render(r) {
     dw.append(chh, ch);
   }
   const tbl = document.createElement("table");
-  tbl.innerHTML = `<thead><tr><th>season</th><th>your yield</th><th>wheat cover</th></tr></thead><tbody></tbody>`;
+  tbl.innerHTML = `<thead><tr><th>season</th><th>satellite</th><th>your yield</th><th>wheat cover</th></tr></thead><tbody></tbody>`;
   const tb = tbl.querySelector("tbody");
   years.forEach(yr => {
     const row = sd[yr], tr = document.createElement("tr");
-    [yr, row.full_season ? f1(row.mean_yield_t_ha) + " t/ha" : "—",
+    [yr, row.sensor === "landsat" ? "Landsat" : "Sentinel-2",
+     row.full_season ? f1(row.mean_yield_t_ha) + " t/ha" : "—",
      row.eo_wheat_season ? Math.round(row.cover_of_polygon * 100) + "%" : "no wheat"]
       .forEach(v => { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); });
     tb.appendChild(tr);
@@ -1161,7 +1121,7 @@ function drawCauseBar(node, causes, total) {
   });
 }
 function drawSeasons(node, years, sd, attain) {
-  const F = frame(node, 720, 200, [14, 96, 26, 34]);
+  const F = frame(node, 720, 200, [14, 118, 26, 34]);   /* room for "10.5 best nearby" */
   const vals = years.map(y => sd[y].full_season ? sd[y].mean_yield_t_ha : null);
   const ymax = Math.ceil(Math.max(...vals.filter(v => v != null), attain || 0, 1) + 0.5);
   const sy = v => F.y0 - (v / ymax) * (F.y0 - F.y1);
@@ -1188,14 +1148,15 @@ function drawSeasons(node, years, sd, attain) {
       hit.addEventListener("pointerleave", hideTip);
       return;
     }
-    const p = el("path", {d: barPath(cx - bw / 2, bw, F.y0, sy(v)), fill: "var(--c1)"}, F.svg);
+    const ls = sd[yr].sensor === "landsat", op = ls ? "0.5" : "1";
+    const p = el("path", {d: barPath(cx - bw / 2, bw, F.y0, sy(v)), fill: "var(--c1)", opacity: op}, F.svg);
     el("text", {x: cx, y: sy(v) - 5, "text-anchor": "middle", class: "dlab"}, F.svg)
       .textContent = f1(v);
     hit.addEventListener("pointermove", e => showTip(e, [
-      {color: cssVar("--c1"), label: `${yr} harvest`, value: f1(v) + " t/ha"}]));
+      {color: cssVar("--c1"), label: `${yr} harvest${ls ? " · Landsat" : ""}`, value: f1(v) + " t/ha"}]));
     hit.addEventListener("pointerleave", hideTip);
-    hit.addEventListener("pointerenter", () => p.setAttribute("opacity", "0.85"));
-    hit.addEventListener("pointerout", () => p.setAttribute("opacity", "1"));
+    hit.addEventListener("pointerenter", () => p.setAttribute("opacity", ls ? "0.4" : "0.85"));
+    hit.addEventListener("pointerout", () => p.setAttribute("opacity", op));
   });
   if (attain != null) {
     el("line", {x1: F.x0, x2: F.x1, y1: sy(attain), y2: sy(attain),

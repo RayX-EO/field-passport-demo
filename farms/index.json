@@ -17,8 +17,8 @@
   },
   "n_fields": 15,
   "total_area_ha": 123.4,
-  "gap_t_ha": 1.85,
-  "value_gbp": 43400,
+  "gap_t_ha": 2.2,
+  "value_gbp": 51500,
   "dominant_cause": "other_management"
  },
  {
@@ -39,8 +39,8 @@
   },
   "n_fields": 15,
   "total_area_ha": 151.0,
-  "gap_t_ha": 2.35,
-  "value_gbp": 67600,
+  "gap_t_ha": 2.26,
+  "value_gbp": 64900,
   "dominant_cause": "other_management"
  },
  {
@@ -61,8 +61,8 @@
   },
   "n_fields": 15,
   "total_area_ha": 151.8,
-  "gap_t_ha": 2.45,
-  "value_gbp": 70500,
+  "gap_t_ha": 2.51,
+  "value_gbp": 72400,
   "dominant_cause": "other_management"
  },
  {
@@ -83,8 +83,8 @@
   },
   "n_fields": 15,
   "total_area_ha": 96.3,
-  "gap_t_ha": 2.19,
-  "value_gbp": 40100,
+  "gap_t_ha": 2.17,
+  "value_gbp": 39700,
   "dominant_cause": "other_management"
  },
  {
@@ -105,8 +105,8 @@
   },
   "n_fields": 15,
   "total_area_ha": 139.3,
-  "gap_t_ha": 3.78,
-  "value_gbp": 100100,
+  "gap_t_ha": 3.38,
+  "value_gbp": 89600,
   "dominant_cause": "other_management"
  },
  {
@@ -127,8 +127,8 @@
   },
   "n_fields": 15,
   "total_area_ha": 163.2,
-  "gap_t_ha": 2.42,
-  "value_gbp": 75100,
+  "gap_t_ha": 2.33,
+  "value_gbp": 72300,
   "dominant_cause": "weather"
  },
  {
@@ -149,8 +149,8 @@
   },
   "n_fields": 15,
   "total_area_ha": 140.9,
-  "gap_t_ha": 1.96,
-  "value_gbp": 52600,
+  "gap_t_ha": 1.86,
+  "value_gbp": 49900,
   "dominant_cause": "weather"
  },
  {
@@ -171,8 +171,8 @@
   },
   "n_fields": 15,
   "total_area_ha": 116.0,
-  "gap_t_ha": 3.2,
-  "value_gbp": 70600,
+  "gap_t_ha": 2.98,
+  "value_gbp": 65600,
   "dominant_cause": "other_management"
  }
 ]
