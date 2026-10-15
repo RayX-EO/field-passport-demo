@@ -3,10 +3,10 @@
   "id": "GB-WW-E42DFC",
   "file": "examples/GB-WW-E42DFC.json",
   "area_ha": 19.5,
-  "gap_t_ha": 3.55,
+  "gap_t_ha": 3.18,
   "gap_class": "large",
   "dominant_cause": "other_management",
-  "seasons": 7,
+  "seasons": 8,
   "centroid": [
    461005,
    266497
@@ -16,10 +16,10 @@
   "id": "GB-WW-15ECC1",
   "file": "examples/GB-WW-15ECC1.json",
   "area_ha": 15.7,
-  "gap_t_ha": 2.21,
-  "gap_class": "moderate",
+  "gap_t_ha": 2.06,
+  "gap_class": "small",
   "dominant_cause": "weather",
-  "seasons": 6,
+  "seasons": 8,
   "centroid": [
    508977,
    232912
@@ -29,10 +29,10 @@
   "id": "GB-WW-B4BF1C",
   "file": "examples/GB-WW-B4BF1C.json",
   "area_ha": 12.2,
-  "gap_t_ha": 2.04,
-  "gap_class": "small",
+  "gap_t_ha": 2.09,
+  "gap_class": "moderate",
   "dominant_cause": "weather",
-  "seasons": 6,
+  "seasons": 7,
   "centroid": [
    427460,
    244555
@@ -42,10 +42,10 @@
   "id": "GB-WW-73BFFA",
   "file": "examples/GB-WW-73BFFA.json",
   "area_ha": 11.5,
-  "gap_t_ha": 2.21,
+  "gap_t_ha": 2.32,
   "gap_class": "moderate",
   "dominant_cause": "other_management",
-  "seasons": 5,
+  "seasons": 9,
   "centroid": [
    557880,
    210016
@@ -55,10 +55,10 @@
   "id": "GB-WW-BC1C5F",
   "file": "examples/GB-WW-BC1C5F.json",
   "area_ha": 10.7,
-  "gap_t_ha": 2.45,
+  "gap_t_ha": 2.7,
   "gap_class": "moderate",
   "dominant_cause": "other_management",
-  "seasons": 5,
+  "seasons": 6,
   "centroid": [
    593345,
    322647
@@ -68,10 +68,10 @@
   "id": "GB-WW-A67C23",
   "file": "examples/GB-WW-A67C23.json",
   "area_ha": 8.9,
-  "gap_t_ha": 2.64,
+  "gap_t_ha": 2.58,
   "gap_class": "moderate",
   "dominant_cause": "other_management",
-  "seasons": 4,
+  "seasons": 6,
   "centroid": [
    550959,
    322360

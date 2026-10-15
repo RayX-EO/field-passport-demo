@@ -1,33 +1,36 @@
 # Field Passport — demo site (static)
 
-Self-contained static site: farmer demo (8 farm packs, `index.html`),
-live-draw page against the v2 API (`live/`), API doc (`API_v2.md`),
-proposal one-pager (`field_passport_onepager.*`). ~9 MB, no build step,
-all internal paths relative — serves from a domain root or a subpath.
+Self-contained static site, ~9 MB, no build step, all internal paths relative:
+- `index.html`: the farmer demo. 8 constructed farms (`farms/`), each 15 real neighbouring winter-wheat fields;
+  the grouping into farms is ours, and every farm says so. Each field's report was computed in advance.
+- `examples/`: 6 single example fields in the same format. The page offers them only when there are no farms.
+- `field_passport_onepager.*`: the proposal one-pager.
 
-## Deploy on GitHub Pages (rayx.co.uk already runs on Pages)
+The site calls no API, so a visitor cannot submit a field of their own. The live service and its contract are in
+yield-platform `services/passport` (`CONTRACT.md`, `RUNBOOK.md`).
 
-**Option A — subdomain (recommended)**
-1. Push this directory to a new repo in the RayX org (e.g. `field-passport-demo`).
-2. Repo Settings -> Pages -> deploy from branch, root.
-3. Keep the `CNAME` file (`passport.rayx.co.uk`); set the same custom domain in
-   the Pages settings; tick Enforce HTTPS once the cert issues.
-4. Namecheap DNS: add `CNAME passport -> <org>.github.io`.
+## How it is served
 
-**Option B — path on the main site**
-Copy everything into a `demo/` folder of the existing site repo and DELETE
-the `CNAME` file. No DNS change; served at rayx.co.uk/demo/.
+GitHub Pages, from the root of `main`, at **passport.rayx.co.uk** (`CNAME`; DNS `CNAME passport -> <owner>.github.io`
+at Namecheap; Enforce HTTPS on). It is not linked from rayx.co.uk. Merging into `main` publishes.
 
-## After it's live
-- The live page calls the AWS API (api gateway, eu-west-2); CORS already
-  allows any origin. Optionally tighten `AllowOrigins` to the new domain.
-- Rotate the API token and share the new one with demo users only
-  (the page takes it via one-time prompt or a `#token=` URL fragment —
-  it is never embedded in the page).
-- The JASMIN copy can stay as staging; site updates = re-run
-  `publish_farm.py` and push.
+## The reports
 
-## Before going public on a company domain — check one licence
-`crop_history` in the field packs derives from UKCEH LCCM. Publishing it
-under a company domain is a redistribution question — confirm the licence
-covers it, or republish the packs with crop_history stripped.
+Since 2026-10-15 they come from the 13-season record, 2013–2025 (Landsat 2013–2017 resampled to 10 m, Sentinel-2
+2018–2025), computed by the engine the live service runs. Fields where fewer than 3 wheat seasons are Sentinel-2
+carry the reminder that their within-field pattern is less reliable, and the page shows it. Before, the reports came
+from the 8-season Sentinel-2 record (2018–2025), built on 2026-08-28.
+
+To recompute them, for example after a new release of the record, refresh a checkout of this repository on JASMIN,
+from a checkout of yield-platform (`services/passport/demo/refresh_demo.py`):
+
+```bash
+SITE=~/field-passport-demo sbatch services/passport/jasmin/demo.sbatch
+```
+
+It keeps every field, its outline and its id, and rewrites the reports, the farms' summaries, `farms/index.json`,
+`examples/index.json` and the list embedded in `index.html` (`window.PASSPORT_CFG`). Review the diff, then merge.
+
+## Data
+
+The field outlines are UKCEH LCCM 2022 parcels. The reports carry no crop history.
